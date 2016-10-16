@@ -35,14 +35,27 @@
 
 #include "../Config.h"
 #include "../Executor/PortManager.h"
-#include "caf/all.hpp"
-using caf::actor;
+
 using std::make_pair;
 using std::string;
 using std::vector;
 namespace claims {
 
-BaseNode::BaseNode() : node_id_(-1) {
+//BaseNode::BaseNode() :
+//    node_id_(-1),system(cfg.load<io::middleman>()),
+//    master_actor_ (system.middleman().remote_actor("127.0.0.1",10000)) {
+//  ReadNodeAddr();
+//  ReadMasterAddr();
+//  master_actor_ = system.middleman().remote_actor(master_addr_.first,master_addr_.second);
+//}
+//BaseNode::BaseNode(string node_ip, uint16_t node_port)
+//    : node_addr_(make_pair(node_ip, node_port)), node_id_(-1),cfg(),system(cfg),
+//      master_actor_ (system.middleman().remote_actor("127.0.0.1",10000)) {
+//  ReadMasterAddr();
+//  master_actor_ = system.middleman().remote_actor(master_addr_.first,master_addr_.second);
+//}
+BaseNode::BaseNode() :
+    node_id_(-1) {
   ReadNodeAddr();
   ReadMasterAddr();
 }
@@ -80,14 +93,18 @@ NodeAddr BaseNode::GetNodeAddrFromId(const unsigned int id) {
     return NodeAddr("0", 0);
   }
 }
-actor &BaseNode::GetNodeActorFromId(const unsigned int id) {
+caf::expected<caf::actor> &BaseNode::GetNodeActorFromId(const unsigned int id) {
   lock_.acquire();
   auto it = node_id_to_actor_.find(id);
   lock_.release();
   if (it != node_id_to_actor_.end()) {
     return it->second;
   } else {
-    actor null_actor;
+    actor_system_config cfg;
+    actor_system system {cfg.load<io::middleman>()};
+    // need fix
+    auto null_actor = system.middleman().remote_actor("256.256.256.256",10000);
+    LOG(WARNING) <<"target actor is null actor"<<endl;
     return null_actor;
   }
 }
@@ -101,4 +118,6 @@ vector<NodeID> BaseNode::GetAllNodeID() {
   lock_.release();
   return all_node_id;
 }
+
 }  // namespace claims
+

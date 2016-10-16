@@ -35,7 +35,6 @@
 #include "caf/io/all.hpp"
 
 #include "caf/all.hpp"
-using caf::io::remote_actor;
 using std::string;
 using std::endl;
 using claims::common::rNetworkError;
@@ -53,9 +52,9 @@ SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id,
       stop_report_(false),
       ReportErrorTimes(0) {
   //  RegisterToTracker();
-  coor_actor_ =
-      Environment::getInstance()->get_slave_node()->GetNodeActorFromId(
-          coor_node_id);
+//  coor_actor_ =
+//      Environment::getInstance()->get_slave_node()->GetNodeActorFromId(
+//          coor_node_id);
 }
 SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id)
     : node_segment_id_(node_segment_id),
@@ -111,11 +110,11 @@ bool SegmentExecStatus::UpdateStatus(ExecStatus exec_status, string exec_info,
     need_report = false;  // for debug
     if (need_report) {
       ++logic_time_;
-      caf::scoped_actor self;
-      self->send(Environment::getInstance()
-                     ->get_segment_exec_tracker()
-                     ->segment_exec_tracker_actor_,
-                 ReportSAtom::value, this);
+      actor_system_config cfg1;
+      actor_system system {cfg1.load<io::middleman>()};
+      caf::scoped_actor self{system};
+      auto segment_exec_tracker_actor= system.middleman().remote_actor("127.0.0.1",20000);
+      self->send(*segment_exec_tracker_actor,ReportSAtom::value, this);
     }
   } else {
     lock_.release();

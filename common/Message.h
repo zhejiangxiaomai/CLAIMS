@@ -36,7 +36,6 @@
 #include "ids.h"
 using claims::NodeAddr;
 using claims::physical_operator::PhysicalOperatorBase;
-
 // It's better to use fixed length information for implementation concern.
 struct StorageBudgetMessage {
   StorageBudgetMessage(const int& disk_budget, const int& memory_budget,
@@ -53,7 +52,12 @@ struct StorageBudgetMessage {
            disk_budget == lhs.disk_budget;
   }
 };
-
+//Declare for caf serialization
+template <class Inspector>
+typename Inspector::result_type inspect(Inspector& f, StorageBudgetMessage& x) {
+    return f(meta::type_name("StorageBudgetMessage"), x.nodeid,
+             x.memory_budget, x.disk_budget);
+}
 struct PartitionBindingMessage {
   PartitionBindingMessage(const PartitionID& pid, const unsigned& num,
                           const StorageLevel& level)

@@ -16,7 +16,6 @@
 #include "../../catalog/stat/StatManager.h"
 
 using namespace claims::catalog;
-
 Estimation::Estimation() {
   // TODO Auto-generated constructor stub
 }
@@ -85,7 +84,7 @@ unsigned long Estimation::estEqualOper(AttributeID attrID, void *para) {
 /**
  * compute the cover ratio
  */
-double ratio(const void *sourLow, const void *sourUp, const void *paraLow,
+double ratio_claims(const void *sourLow, const void *sourUp, const void *paraLow,
              const void *paraUp, const column_type *type) {
   // TODO ADD support for new data types
   double ret = 0;
@@ -171,7 +170,7 @@ unsigned long Estimation::estRangeOper(AttributeID attrID, void *lowPara,
       if (op->equal(lowPara, stat->m_staValues1[i]))
         sel -= 1.0 / stat->m_staNumbers1[i];
     } else {  // intersect
-      double r = ratio(stat->m_staValues1[i], stat->m_staValues1[i + 1],
+      double r = ratio_claims(stat->m_staValues1[i], stat->m_staValues1[i + 1],
                        lowPara, upperPara, attr.attrType);
       sel += r;
     }
@@ -193,8 +192,8 @@ unsigned long Estimation::estRangeOper(AttributeID attrID, void *lowPara,
 unsigned long product(const void *lp1, const void *rp1, const int d1,
                       const int c1, const void *lp2, const void *rp2,
                       const int d2, const int c2, const column_type *type) {
-  double r1 = ratio(lp1, rp1, lp2, rp2, type);
-  double r2 = ratio(lp2, rp2, lp1, rp1, type);
+  double r1 = ratio_claims(lp1, rp1, lp2, rp2, type);
+  double r2 = ratio_claims(lp2, rp2, lp1, rp1, type);
 
   int numDistinctValue1 = d1 * r1;
   int numDistinctValue2 = d2 * r2;

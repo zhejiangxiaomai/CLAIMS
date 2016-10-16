@@ -36,28 +36,36 @@
 #include "../common/error_define.h"
 #include "../utility/lock.h"
 #include "caf/all.hpp"
-using caf::actor;
 using std::pair;
 using std::string;
+using caf::event_based_actor;
+using caf::actor_config;
+using caf::behavior;
 
 namespace claims {
 // first=query_id, second=segment_id*kMaxNodeNum + node_id
 #define kReportIntervalTime 3000
 typedef std::pair<u_int64_t, u_int64_t> NodeSegmentID;
+//Declare for caf serialization
+template <class Inspector>
+typename Inspector::result_type inspect(Inspector& f, NodeSegmentID& x) {
+    return f(caf::meta::type_name("NodeSegmentID"), x.first,
+      x.second);
+}
 class SegmentExecStatus;
 class SegmentExecTracker {
  public:
+  friend class SegmentExecTrackerActor;
   SegmentExecTracker();
   virtual ~SegmentExecTracker();
+//  behavior make_behavior() override;
   RetCode CancelSegExec(NodeSegmentID node_segment_id);
   RetCode RegisterSegES(NodeSegmentID node_segment_id,
                         SegmentExecStatus* seg_exec_status);
   RetCode UnRegisterSegES(NodeSegmentID node_segment_id);
   // report all remote_segment_status located at slave node
-  static void ReportAllSegStatus(caf::event_based_actor* self,
-                                 SegmentExecTracker* seg_exec_tracker);
-
-  actor segment_exec_tracker_actor_;
+//  static behavior ReportAllSegStatus(caf::event_based_actor* self,
+//                                 SegmentExecTracker* seg_exec_tracker);
 
  private:
   boost::unordered_map<NodeSegmentID, SegmentExecStatus*>

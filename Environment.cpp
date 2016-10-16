@@ -30,7 +30,6 @@
 #include "common/expression/expr_type_cast.h"
 #include "common/expression/type_conversion_matrix.h"
 
-using caf::announce;
 using claims::BaseNode;
 using claims::catalog::Catalog;
 using claims::common::InitAggAvgDivide;
@@ -146,18 +145,19 @@ void Environment::readConfigFile() {
 }
 
 void Environment::AnnounceCafMessage() {
-  announce<StorageBudgetMessage>(
-      "StorageBudgetMessage", &StorageBudgetMessage::nodeid,
-      &StorageBudgetMessage::memory_budget, &StorageBudgetMessage::disk_budget);
-  announce<ProjectionID>("ProjectionID", &ProjectionID::table_id,
-                         &ProjectionID::projection_off);
-  announce<PartitionID>("PartitionID", &PartitionID::projection_id,
-                        &PartitionID::partition_off);
-  announce<ExchangeID>("ExchangeID", &ExchangeID::exchange_id,
-                       &ExchangeID::partition_offset);
-  announce<BaseNode>("BaseNode", &BaseNode::node_id_to_addr_);
-  announce<NodeSegmentID>("NodeSegmentID", &NodeSegmentID::first,
-                          &NodeSegmentID::second);
+    CafConfig *caf_config = new CafConfig();
+    //  announce<StorageBudgetMessage>(
+//      "StorageBudgetMessage", &StorageBudgetMessage::nodeid,
+//      &StorageBudgetMessage::memory_budget, &StorageBudgetMessage::disk_budget);
+//  announce<ProjectionID>("ProjectionID", &ProjectionID::table_id,
+//                         &ProjectionID::projection_off);
+//  announce<PartitionID>("PartitionID", &PartitionID::projection_id,
+//                        &PartitionID::partition_off);
+//  announce<ExchangeID>("ExchangeID", &ExchangeID::exchange_id,
+//                       &ExchangeID::partition_offset);
+//  announce<BaseNode>("BaseNode", &BaseNode::node_id_to_addr_);
+//  announce<NodeSegmentID>("NodeSegmentID", &NodeSegmentID::first,
+//                          &NodeSegmentID::second);
 }
 void Environment::initializeStorage() {
   if (ismaster_) {

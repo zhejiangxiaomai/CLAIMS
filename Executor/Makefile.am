@@ -5,7 +5,7 @@ AM_CPPFLAGS= -fPIC -fpermissive -DTHERON_XS\
 -I${JAVA_HOME}/include\
 -I${JAVA_HOME}/include/linux
 
-AM_LDFLAGS=-lc -lm -lrt -lconfig++ -lpthread -lboost_serialization -lxs
+AM_LDFLAGS=-lc -lm -lrt -lconfig++ -lpthread -lboost_serialization -lxs  -std=c++11
 
 if OPT_TCMALLOC
 AM_CPPFLAGS+=-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free

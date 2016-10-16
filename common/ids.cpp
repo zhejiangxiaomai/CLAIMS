@@ -8,6 +8,9 @@
 #include "ids.h"
 #include "../Config.h"
 #include "string.h"
+
+
+namespace claims {
 std::string PartitionID::getPathAndName() const {
   std::ostringstream str;
   std::string str1;
@@ -18,4 +21,21 @@ std::string PartitionID::getPathAndName() const {
   str1 = str.str();
   str.clear();
   return str1;
+}
+
+//Declare for caf serialization
+//template <class Inspector>
+//typename Inspector::result_type inspect(Inspector& f, ProjectionID& x) {
+//    return f(caf::meta::type_name("ProjectionID"),&x.table_id, &x.projection_off);
+//}
+//
+//template <class Inspector>
+//typename Inspector::result_type inspect(Inspector& f, PartitionID& x) {
+//    return f(caf::meta::type_name("PartitionID"),&x.projection_id, &x.partition_off);
+//}
+//
+//template <class Inspector>
+//typename Inspector::result_type inspect(Inspector& f, ExchangeID& x) {
+//    return f(caf::meta::type_name("ExchangeID"), &x.exchange_id, &x.partition_offset);
+//}
 }

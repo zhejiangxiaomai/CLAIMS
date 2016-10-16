@@ -16,7 +16,6 @@
 #include "caf/all.hpp"
 #include "../node_manager/base_node.h"
 using caf::after;
-using caf::io::remote_actor;
 using claims::BindingAtom;
 using claims::OkAtom;
 using claims::UnBindingAtom;
@@ -41,31 +40,21 @@ void BlockManagerMaster::initialize() { abi_ = AllBlockInfo::getInstance(); }
 bool BlockManagerMaster::SendBindingMessage(
     const PartitionID &partition_id, const unsigned &number_of_chunks,
     const StorageLevel &desirable_storage_level, const NodeID &target) const {
-  caf::scoped_actor self;
-  try {
-    auto target_actor =
+  actor_system system {*Environment::getInstance()->get_caf_config()};
+  caf::scoped_actor self{system};
+  caf::expected<caf::actor> target_actor =
         Environment::getInstance()->get_master_node()->GetNodeActorFromId(
             target);
-    self->sync_send(target_actor, BindingAtom::value, partition_id,
-                    number_of_chunks, desirable_storage_level)
-        .await(
-
+    self->request(*target_actor, std::chrono::seconds(30), BindingAtom::value,
+                  partition_id, number_of_chunks, desirable_storage_level).receive(
             [=](OkAtom) {
               LOG(INFO) << "sending binding message is OK!!" << endl;
             },
-            after(std::chrono::seconds(30)) >>
-                [=]() {
-                  LOG(WARNING) << "sending binding message, but timeout 30s!!"
+            [&](const error& err) {
+              LOG(WARNING) << "sending binding message, but timeout 30s!!"
                                << endl;
-                  return false;
-                }
-
-            );
-  } catch (caf::network_error &e) {
-    LOG(WARNING)
-        << "cann't connect to remote actor when sending binding message!";
-    return false;
-  }
+             return false;
+             });
   return true;
 }
 
@@ -75,27 +64,19 @@ bool BlockManagerMaster::SendBindingMessage(
  */
 bool BlockManagerMaster::SendUnbindingMessage(const PartitionID &partition_id,
                                               NodeID &target) const {
-  caf::scoped_actor self;
-  try {
-    auto target_actor =
+  actor_system system {*Environment::getInstance()->get_caf_config()};
+  caf::scoped_actor self{system};
+  caf::expected<caf::actor> target_actor =
         Environment::getInstance()->get_master_node()->GetNodeActorFromId(
             target);
-    self->sync_send(target_actor, UnBindingAtom::value, partition_id).await(
+    self->request(*target_actor, std::chrono::seconds(30), UnBindingAtom::value, partition_id).receive(
         [=](OkAtom) {
           LOG(INFO) << "sending unbinding message is OK!!" << endl;
         },
-        after(std::chrono::seconds(30)) >>
-            [=]() {
-              LOG(WARNING) << "sending unbinding message, but timeout 30s!!"
-                           << endl;
-              return false;
-            }
-
-        );
-  } catch (caf::network_error &e) {
-    LOG(WARNING)
-        << "cann't connect to remote actor when sending unbinding message!";
-    return false;
-  }
+        [&](const error& err) {
+          LOG(WARNING) << "sending unbinding message, but timeout 30s!!"
+                       << endl;
+          return false;
+        });
   return true;
 }

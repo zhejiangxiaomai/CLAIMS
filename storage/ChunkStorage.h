@@ -30,7 +30,7 @@
 #ifndef CHUNKSTORAGE_H_
 #define CHUNKSTORAGE_H_
 #include <string>
-#include <hdfs.h>
+#include "hdfs.h"
 #include "./StorageLevel.h"
 #include "../utility/lock.h"
 #include "../common/ids.h"

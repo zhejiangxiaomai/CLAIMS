@@ -25,19 +25,22 @@
 #include "node_manager/master_node.h"
 #include "node_manager/slave_node.h"
 #include "Resource/BufferManager.h"
-
+#include "caf/all.hpp"
+#include "caf/io/all.hpp"
 using claims::catalog::Catalog;
 using claims::MasterNode;
 using claims::SegmentExecTracker;
 using claims::SlaveNode;
 using claims::StmtExecTracker;
+//using caf::actor_system_config;
+//using namespace caf;
 class Catalog;
 class IteratorExecutorSlave;
 class BlockManager;
 class ResourceManagerMaster;
 class InstanceResourceManager;
 class BlockManagerMaster;
-
+class CafConfig;
 class Environment {
  public:
   virtual ~Environment();
@@ -63,7 +66,7 @@ class Environment {
 
   StmtExecTracker* get_stmt_exec_tracker() { return stmt_exec_tracker_; }
   SegmentExecTracker* get_segment_exec_tracker() { return seg_exec_tracker_; }
-
+  CafConfig* get_caf_config() { return caf_config;}
  private:
   void AnnounceCafMessage();
   void readConfigFile();
@@ -105,6 +108,7 @@ class Environment {
 
   StmtExecTracker* stmt_exec_tracker_;
   SegmentExecTracker* seg_exec_tracker_;
+  CafConfig* caf_config;
   /**
    * TODO: the master and slave pair, such as ResouceManagerMaster and
    * ResourceManagerSlave, should have a
@@ -112,5 +116,15 @@ class Environment {
    * ResouceManagerMaster and ResourceManagerSlave.
    */
 };
-
+//caf config
+ class CafConfig : public actor_system_config {
+ public:
+  CafConfig() {
+   load<io::middleman>();
+//       .add_message_type<ProjectionID>("ProjectionID")
+//                        .add_message_type<PartitionID>("PartitionID")
+//                        .add_message_type<ExchangeID>("ExchangeID")
+//                        .add_message_type<StorageBudgetMessage>("StorageBudgetMessage");
+   }
+ };
 #endif /* ENVIRONMENT_H_ */

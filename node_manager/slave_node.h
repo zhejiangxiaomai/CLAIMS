@@ -34,9 +34,9 @@
 #include "caf/all.hpp"
 #include "caf/behavior.hpp"
 #include <string>
-using caf::event_based_actor;
+//using caf::event_based_actor;
 using std::string;
-using caf::behavior;
+//using caf::behavior;
 
 namespace claims {
 class SlaveNode : public BaseNode {

@@ -39,7 +39,6 @@
 
 #include "caf/io/all.hpp"
 using boost::chrono::seconds;
-using caf::io::remote_actor;
 using std::make_pair;
 using std::string;
 namespace claims {

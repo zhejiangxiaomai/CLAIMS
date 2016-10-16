@@ -15,6 +15,7 @@
 #include "../common/ids.h"
 #include "../common/Message.h"
 using namespace std;
+using namespace claims;
 /*
  * just for sending binding and unbinding message
  */

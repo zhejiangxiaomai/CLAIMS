@@ -54,7 +54,6 @@ int main(int argc, char** argv) {
   delete slave_node1;
   delete slave_node2;
   delete slave_node3;
-  caf::await_all_actors_done();
   std::cout << "all actors done!" << std::endl;
   return 0;
 }

@@ -41,8 +41,8 @@
 #include "./base_node.h"
 #include "../common/error_define.h"
 #include "../common/ids.h"
-using caf::behavior;
-using caf::event_based_actor;
+//using caf::behavior;
+//using caf::event_based_actor;
 using std::atomic_uint;
 using std::map;
 using std::pair;

@@ -49,7 +49,6 @@
 #include "../physical_operator/physical_operator_base.h"
 #include "../stmt_handler/stmt_handler.h"
 #include "caf/io/all.hpp"
-using caf::io::remote_actor;
 using claims::logical_operator::LogicalQueryPlanRoot;
 using claims::physical_operator::ExchangeSender;
 using claims::physical_operator::ExchangeSenderPipeline;

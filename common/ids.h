@@ -13,6 +13,9 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <sstream>
 #include <string>
+#include "caf/all.hpp"
+#include "caf/io/all.hpp"
+
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -99,6 +102,7 @@ struct ProjectionID{
 	}
 
 };
+
 /* for boost::unordered_map*/
 static size_t hash_value(const ProjectionID& key){
 	size_t seed=0;
@@ -175,6 +179,7 @@ struct PartitionID{
 		ar & partition_off & projection_id;
 	}
 };
+
 /* for boost::unordered_map*/
 static size_t hash_value(const PartitionID& key){
 	size_t seed=0;
@@ -230,5 +235,18 @@ static size_t hash_value(const ExchangeID& key){
 	boost::hash_combine(seed,boost::hash_value(key.partition_offset));
 	return seed;
 }
+template <class Inspector>
+typename Inspector::result_type inspect(Inspector& f, ProjectionID& x) {
+    return f(caf::meta::type_name("ProjectionID"),x.table_id, x.projection_off);
+}
 
+template <class Inspector>
+typename Inspector::result_type inspect(Inspector& f, PartitionID& x) {
+    return f(caf::meta::type_name("PartitionID"),x.projection_id, x.partition_off);
+}
+
+template <class Inspector>
+typename Inspector::result_type inspect(Inspector& f, ExchangeID& x) {
+    return f(caf::meta::type_name("ExchangeID"), x.exchange_id, x.partition_offset);
+}
 #endif /* IDS_H_ */

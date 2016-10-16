@@ -15,7 +15,7 @@
 #include "caf/all.hpp"
 
 #include "../common/memory_handle.h"
-using caf::io::remote_actor;
+
 using claims::SendPlanAtom;
 IteratorExecutorMaster* IteratorExecutorMaster::_instance = 0;
 
@@ -36,6 +36,7 @@ bool IteratorExecutorMaster::ExecuteBlockStreamIteratorsOnSites(
   assert(false);  // shouldn't be here;
   return true;
 }
+
 // send serialized plan string to target
 bool IteratorExecutorMaster::ExecuteBlockStreamIteratorsOnSite(
     PhysicalOperatorBase* it, NodeID target_id, u_int64_t query_id = 0,
@@ -44,20 +45,28 @@ bool IteratorExecutorMaster::ExecuteBlockStreamIteratorsOnSite(
       it, target_id, query_id, segment_id,
       Environment::getInstance()->get_slave_node()->get_node_id());
   string str = PhysicalQueryPlan::TextSerializePlan(*physical_plan);
-  caf::scoped_actor self;
+  actor_system system {*Environment::getInstance()->get_caf_config()};
+  caf::scoped_actor self{system};
   LOG(INFO)<<"!!!!!Master send Plan!!!!"<<endl;
-  try {
-    auto target_actor =
-        Environment::getInstance()->get_master_node()->GetNodeActorFromId(
-            target_id);
-    self->send(target_actor, SendPlanAtom::value, str, query_id, segment_id);
-  } catch (caf::bind_failure& e) {
-    LOG(ERROR)
-        << "master sending plan binds port error when connecting remote actor";
-  } catch (caf::network_error& e) {
-    LOG(ERROR) << "master sending plan connect to remote node error due to "
-                  "network error!";
-  }
+  caf::expected<caf::actor> target_actor =
+          Environment::getInstance()->get_master_node()->GetNodeActorFromId(
+              target_id);
+//  if (!target_actor) {
+//           std::cerr << "unable to connect to node A: "
+//           << system.render(target_actor.error()) << std::endl;
+//  } else {
+         self->send(*target_actor, SendPlanAtom::value, str, query_id, segment_id);
+//  }
+  //  try {
+    //warning: remote_actor may not reach.
+
+//  } catch (caf::bind_failure& e) {
+//    LOG(ERROR)
+//        << "master sending plan binds port error when connecting remote actor";
+//  } catch (caf::network_error& e) {
+//    LOG(ERROR) << "master sending plan connect to remote node error due to "
+//                  "network error!";
+//  }
   DELETE_PTR(physical_plan);
   LOG(INFO) << "master send serialized plan to target slave : " << target_id
             << " succeed!" << endl;

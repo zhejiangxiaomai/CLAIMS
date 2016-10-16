@@ -17,8 +17,8 @@
 #include "../utility/lock.h"
 #include "../common/ids.h"
 #include "caf/all.hpp"
-
-using caf::actor;
+using namespace caf;
+//using caf::actor;
 
 /*
  * maintain pair<id,port> information of exchange, and provide interface for
@@ -35,7 +35,7 @@ class ExchangeTracker {
                                   NodeAddress& node_addr);
   bool AskForSocketConnectionInfo(const ExchangeID& exchange_id,
                                   const NodeID& target_id,
-                                  NodeAddress& node_addr, actor& target_actor);
+                                  NodeAddress& node_addr, expected<actor>& target_actor);
   void printAllExchangeId() const;
   NodeAddress GetExchAddr(ExchangeID exch_id);
 

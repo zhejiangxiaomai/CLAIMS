@@ -14,7 +14,6 @@
 #include "caf/io/all.hpp"
 #include "caf/all.hpp"
 using caf::after;
-using caf::io::remote_actor;
 using claims::NodeAddr;
 using claims::OkAtom;
 using claims::StorageBudgetAtom;
@@ -24,18 +23,26 @@ InstanceResourceManager::~InstanceResourceManager() {}
 
 void InstanceResourceManager::ReportStorageBudget(
     StorageBudgetMessage& message) {
-  caf::scoped_actor self;
-  auto master_actor =
-      Environment::getInstance()->get_slave_node()->GetMasterActor();
-  self->sync_send(master_actor, StorageBudgetAtom::value, message).await(
-
-      [=](OkAtom) { LOG(INFO) << "reporting storage budget is ok!" << endl; },
-      after(std::chrono::seconds(30)) >>
-          [=]() {
-            LOG(WARNING) << "reporting storage budget, but timeout 30s !!"
-                         << endl;
-          });
+  actor_system system {*Environment::getInstance()->get_caf_config()};
+  caf::scoped_actor self{system};
+//  caf::expected<caf::actor> master_actor =
+//      Environment::getInstance()->get_slave_node()->GetMasterActor();
+  caf::expected<caf::actor> master_actor = system.middleman().
+        remote_actor(Environment::getInstance()->get_slave_node()->GetMasterAddr().first,
+                     Environment::getInstance()->get_slave_node()->GetMasterAddr().second);
+  self->request(*master_actor,std::chrono::seconds(30), StorageBudgetAtom::value, message)
+      .receive(
+      [=](OkAtom) {
+      LOG(INFO) << "reporting storage budget is ok!" << endl; }
+      ,
+      [&](const error& err) {
+        if(err == sec::request_timeout){
+          LOG(ERROR) << "reporting storage budget timeout!"<< endl;
+        }
+      LOG(ERROR) << "reporting storage budget error!"<<system.render(err)<< endl;
+      });
      LOG(INFO)<<"node :"<<message.nodeid<<"report storage finish"<<endl;
+
 }
 
 void InstanceResourceManager::setStorageBudget(unsigned long memory,

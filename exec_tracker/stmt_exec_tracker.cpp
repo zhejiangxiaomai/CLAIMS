@@ -38,17 +38,79 @@
 #include "caf/local_actor.hpp"
 using std::make_pair;
 using std::string;
+using namespace caf;
+//using caf::actor_system;
 using claims::common::rCouldnotFindCancelQueryId;
 namespace claims {
 
-StmtExecTracker::StmtExecTracker() : query_id_gen_(0), logic_time_(0) {
-  stmt_exec_tracker_actor_ = caf::spawn(CheckStmtExecStatus, this);
-}
+class StmtExecTrackerActor : public event_based_actor{
+ public:
+  StmtExecTrackerActor(actor_config& cfg, StmtExecTracker *stmt_exec_tracker):
+    event_based_actor(cfg),stmtes(stmt_exec_tracker){}
+
+  behavior make_behavior() override {
+    become(CheckStmtExecStatus());
+    return {};
+    }
+  behavior CheckStmtExecStatus() {
+       return {
+        [=](CheckStmtESAtom) {
+          stmtes->lock_.acquire();
+          for (auto it = stmtes->query_id_to_stmtes_.begin();
+               it != stmtes->query_id_to_stmtes_.end();) {
+            if (it->second->CouldBeDeleted((u_int64_t)stmtes->logic_time_)) {
+              LOG(INFO) << "query id = " << it->first << " will be deleted!";
+              delete it->second;
+              it->second = NULL;
+              // pay attention to erase()
+              it = stmtes->query_id_to_stmtes_.erase(it);
+            } else {
+              if (it->second->HaveErrorCase(stmtes->logic_time_)) {
+                LOG(ERROR) << "query id = " << it->first
+                           << " occur error and will be cancelled!";
+                //  assert(false);
+                it->second->CancelStmtExec();
+              }
+              ++it;
+            }
+          }
+          stmtes->lock_.release();
+          stmtes->logic_time_++;
+          delayed_send(this, std::chrono::milliseconds(kCheckIntervalTime),
+                             CheckStmtESAtom::value);
+        },
+        [=](ExitAtom) { quit(); },
+        [&](const error& err) {
+              LOG(WARNING)<<"stmt checking receives unkown message"<<std::endl;
+        }
+       };
+  }
+  StmtExecTracker * stmtes;
+};
+
+
+StmtExecTracker::StmtExecTracker():
+    query_id_gen_(0), logic_time_(0) {
+  actor_system_config cfg1;
+  cfg1.load<io::middleman>();
+  actor_system system {cfg1};
+  auto stmt_exec_tracker_ = system.spawn<StmtExecTrackerActor>(this);
+  auto expected = system.middleman().publish(stmt_exec_tracker_,20001,"127.0.0.1",true);
+  if(!expected){
+     std::cerr << "*** publish failed: "
+              << system.render(expected.error()) << endl;
+  }
+ }
+
 
 StmtExecTracker::~StmtExecTracker() {
-  caf::scoped_actor self;
-  self->send(stmt_exec_tracker_actor_, ExitAtom::value);
+  actor_system_config cfg1;
+  cfg1.load<io::middleman>();
+  actor_system system {cfg1};
+  caf::scoped_actor self{system};
   assert(query_id_to_stmtes_.size() == 0);
+  auto stmt_exec_tracker_ = system.middleman().remote_actor("127.0.0.1",20000);
+  self->send(*stmt_exec_tracker_, ExitAtom::value);
 }
 
 RetCode StmtExecTracker::RegisterStmtES(StmtExecStatus* stmtes) {
@@ -89,43 +151,53 @@ RetCode StmtExecTracker::CancelStmtExec(u_int64_t query_id) {
   lock_.release();
   return rSuccess;
 }
-
-void StmtExecTracker::CheckStmtExecStatus(caf::event_based_actor* self,
-                                          StmtExecTracker* stmtes) {
-  self->become(
-
-      [=](CheckStmtESAtom) {
-        stmtes->lock_.acquire();
-        for (auto it = stmtes->query_id_to_stmtes_.begin();
-             it != stmtes->query_id_to_stmtes_.end();) {
-          if (it->second->CouldBeDeleted((u_int64_t)stmtes->logic_time_)) {
-            LOG(INFO) << "query id = " << it->first << " will be deleted!";
-            delete it->second;
-            it->second = NULL;
-            // pay attention to erase()
-            it = stmtes->query_id_to_stmtes_.erase(it);
-          } else {
-            if (it->second->HaveErrorCase(stmtes->logic_time_)) {
-              LOG(ERROR) << "query id = " << it->first
-                         << " occur error and will be cancelled!";
-              //  assert(false);
-              it->second->CancelStmtExec();
-            }
-            ++it;
-          }
-        }
-        stmtes->lock_.release();
-        stmtes->logic_time_++;
-        self->delayed_send(self, std::chrono::milliseconds(kCheckIntervalTime),
-                           CheckStmtESAtom::value);
-      },
-      [=](ExitAtom) { self->quit(); },
-      caf::others >> [=]() {
-                       LOG(WARNING) << "stmt checking receives unkown message"
-                                    << endl;
-                     });
-  self->send(self, CheckStmtESAtom::value);
-}
+//behavior StmtExecTracker::make_behavior()
+//{
+//  become(CheckStmtExecStatus,this);
+//  actor_system_config cfg;
+//  cfg.load<io::middleman>();
+//  actor_system system{cfg};
+//  scoped_actor self{system};
+//  self->send(this, CheckStmtESAtom::value);
+//  return {};
+//}
+//behavior StmtExecTracker::CheckStmtExecStatus(caf::event_based_actor* self,
+//                                          StmtExecTracker* stmtes) {
+////  self->become(
+//     return {
+//      [=](CheckStmtESAtom) {
+//        stmtes->lock_.acquire();
+//        for (auto it = stmtes->query_id_to_stmtes_.begin();
+//             it != stmtes->query_id_to_stmtes_.end();) {
+//          if (it->second->CouldBeDeleted((u_int64_t)stmtes->logic_time_)) {
+//            LOG(INFO) << "query id = " << it->first << " will be deleted!";
+//            delete it->second;
+//            it->second = NULL;
+//            // pay attention to erase()
+//            it = stmtes->query_id_to_stmtes_.erase(it);
+//          } else {
+//            if (it->second->HaveErrorCase(stmtes->logic_time_)) {
+//              LOG(ERROR) << "query id = " << it->first
+//                         << " occur error and will be cancelled!";
+//              //  assert(false);
+//              it->second->CancelStmtExec();
+//            }
+//            ++it;
+//          }
+//        }
+//        stmtes->lock_.release();
+//        stmtes->logic_time_++;
+//        self->delayed_send(self, std::chrono::milliseconds(kCheckIntervalTime),
+//                           CheckStmtESAtom::value);
+//      },
+//      [=](ExitAtom) { self->quit(); },
+//      [&](const error& err) {
+//            LOG(WARNING)<<"stmt checking receives unkown message"<<std::endl;
+//      }
+//     };
+////      );
+////  self->send(self, CheckStmtESAtom::value);
+//}
 
 // first find stmt_exec_status, then update status
 bool StmtExecTracker::UpdateSegExecStatus(
