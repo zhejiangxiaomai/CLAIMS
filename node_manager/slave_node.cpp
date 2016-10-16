@@ -148,7 +148,7 @@ class SlaveNodeActor : public event_based_actor {
           actor_system_config cfg1;
           cfg1.load<io::middleman>();
           actor_system system{cfg1};
-          caf::expected<caf::actor> master_actor_= system.middleman().remote_actor(slave_node_->master_addr_.first,
+          expected<actor> master_actor_= system.middleman().remote_actor(slave_node_->master_addr_.first,
                                                               slave_node_->master_addr_.second);
             if (!master_actor_){
               LOG(WARNING)<<"can't connect to master"<<std::endl;
@@ -175,7 +175,7 @@ class SlaveNodeActor : public event_based_actor {
                                           node.node_id_to_addr_.end());
                     for (auto it = slave_node_->node_id_to_addr_.begin();
                         it != slave_node_->node_id_to_addr_.end(); ++it) {
-                      caf::expected<caf::actor> actor =
+                      expected<actor> actor =
                         system.middleman().remote_actor(it->second.first, it->second.second);
                       slave_node_->node_id_to_actor_.insert(make_pair(it->first, actor));
                     }
@@ -197,7 +197,7 @@ class SlaveNodeActor : public event_based_actor {
             std::cout<<"slave"<<slave_node_->node_id_<<"lost heartbeat from master, start register again"<<endl;
             bool is_success = false;
             become(
-                caf::keep_behavior,
+                keep_behavior,
                 [&](RegisterAtom){
                   auto ret = slave_node_->RegisterToMaster(false);
                   if (ret == rSuccess){
@@ -233,7 +233,7 @@ class SlaveNodeActor : public event_based_actor {
                                                    node.node_id_to_addr_.end());
           for (auto it = slave_node_->node_id_to_addr_.begin();
               it != slave_node_->node_id_to_addr_.end(); ++it) {
-              caf::expected<caf::actor> actor =
+              expected<actor> actor =
                   system.middleman().remote_actor(it->second.first, it->second.second);
               if(!actor){
                 LOG(WARNING) << "cann't connect to node ( " <<it->first<< " , "<<it->second.first <<
@@ -267,7 +267,7 @@ RetCode SlaveNode::AddOneNode(const unsigned int& node_id,
   lock_.acquire();
   RetCode ret = rSuccess;
   node_id_to_addr_.insert(make_pair(node_id, make_pair(node_ip, node_port)));
-  caf::expected<caf::actor>  actor = system.middleman().remote_actor(node_ip, node_port);
+  expected<actor>  actor = system.middleman().remote_actor(node_ip, node_port);
   if(!actor){
     LOG(WARNING) << "cann't connect to node ( " << node_ip << " , " << node_port
                      << " ) and create remote actor failed!!";
@@ -293,11 +293,11 @@ SlaveNode::~SlaveNode() { instance_ = NULL; }
 void SlaveNode::CreateActor() {
   actor_system_config cfg;
   actor_system system {cfg.load<io::middleman>()};
-  caf::expected<caf::actor> slave_actor = system.spawn<SlaveNodeActor>(this);
+  expected<actor> slave_actor = system.spawn<SlaveNodeActor>(this);
   bool is_done = false;
 
   for (int try_time = 0; try_time < 20 && !is_done; ++try_time) {
-      caf::expected<caf::actor> master_actor_ =
+      expected<actor> master_actor_ =
           system.middleman().remote_actor(master_addr_.first, master_addr_.second);
       if(!master_actor_){
         cout << "slave node connect remote_actor error due to network "
@@ -339,9 +339,9 @@ RetCode SlaveNode::RegisterToMaster(bool isFirstRegister) {
   actor_system_config cfg;
   cfg.load<io::middleman>();
   actor_system system {cfg};
-  caf::scoped_actor self{system};
+  scoped_actor self{system};
   LOG(INFO)<<"slave just RegisterToMaster!!"<<endl;
-  caf::expected<caf::actor> master_actor_ = system.middleman().remote_actor(master_addr_.first,master_addr_.second);
+  expected<actor> master_actor_ = system.middleman().remote_actor(master_addr_.first,master_addr_.second);
   self->request(*master_actor_, std::chrono::seconds(kTimeout), RegisterAtom::value, get_node_ip(),
                 get_node_port()).receive(
             [&](OkAtom, const unsigned int& id, const BaseNode& node) {
@@ -354,7 +354,7 @@ RetCode SlaveNode::RegisterToMaster(bool isFirstRegister) {
                                          node.node_id_to_addr_.end());
                  for (auto it = node_id_to_addr_.begin();
                       it != node_id_to_addr_.end(); ++it) {
-                   caf::expected<caf::actor> actor =
+                   expected<actor> actor =
                        system.middleman().remote_actor(it->second.first, it->second.second);
                    node_id_to_actor_.insert(make_pair(it->first, actor));
                  }
@@ -363,7 +363,7 @@ RetCode SlaveNode::RegisterToMaster(bool isFirstRegister) {
                  if(isFirstRegister){
                    actor_system_config cfg;
                    actor_system system {cfg.load<io::middleman>()};
-                   caf::scoped_actor self1{system};
+                   scoped_actor self1{system};
                    auto slave_self = system.middleman().remote_actor(get_node_ip(), get_node_port());
                    self1->send(*slave_self,HeartBeatAtom::value);
                  }},

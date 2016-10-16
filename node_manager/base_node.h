@@ -95,7 +95,7 @@ class BaseNode {
   NodeAddr GetMasterAddr();
   void ReadMasterAddr();
   NodeAddr GetNodeAddrFromId(const unsigned int id);
-  caf::expected<caf::actor>& GetNodeActorFromId(const unsigned int id);
+  expected<actor>& GetNodeActorFromId(const unsigned int id);
 //  caf::expected<caf::actor>& GetMasterActor() { return master_actor_; }
   vector<NodeID> GetAllNodeID();
 

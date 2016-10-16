@@ -46,9 +46,9 @@ bool IteratorExecutorMaster::ExecuteBlockStreamIteratorsOnSite(
       Environment::getInstance()->get_slave_node()->get_node_id());
   string str = PhysicalQueryPlan::TextSerializePlan(*physical_plan);
   actor_system system {*Environment::getInstance()->get_caf_config()};
-  caf::scoped_actor self{system};
+  scoped_actor self{system};
   LOG(INFO)<<"!!!!!Master send Plan!!!!"<<endl;
-  caf::expected<caf::actor> target_actor =
+  expected<actor> target_actor =
           Environment::getInstance()->get_master_node()->GetNodeActorFromId(
               target_id);
 //  if (!target_actor) {

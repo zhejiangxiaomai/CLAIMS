@@ -112,7 +112,7 @@ bool SegmentExecStatus::UpdateStatus(ExecStatus exec_status, string exec_info,
       ++logic_time_;
       actor_system_config cfg1;
       actor_system system {cfg1.load<io::middleman>()};
-      caf::scoped_actor self{system};
+      scoped_actor self{system};
       auto segment_exec_tracker_actor= system.middleman().remote_actor("127.0.0.1",20000);
       self->send(*segment_exec_tracker_actor,ReportSAtom::value, this);
     }

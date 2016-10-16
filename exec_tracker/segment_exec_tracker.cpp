@@ -103,7 +103,7 @@ public:
                 actor_system_config cfg1;
                 cfg1.load<io::middleman>();
                 actor_system system{cfg1};
-                caf::expected<caf::actor> coor_actor_ = system.middleman().remote_actor(addr.first,addr.second);
+                expected<actor> coor_actor_ = system.middleman().remote_actor(addr.first,addr.second);
                 request(*coor_actor_,std::chrono::seconds(kTimeout), ReportSegESAtom::value,
                               seg_exec_status.node_segment_id_, exec_status, exec_info)
                             .then(
@@ -179,9 +179,10 @@ SegmentExecTracker::SegmentExecTracker() {
 
 SegmentExecTracker::~SegmentExecTracker() {
   //没有句柄 无法析构它segment_exec_tracker_actor_
+  //这里有问题
   actor_system_config cfg1;
   actor_system system {cfg1.load<io::middleman>()};
-  caf::scoped_actor self{system};
+  scoped_actor self{system};
   auto segment_exec_tracker_actor = system.middleman().remote_actor("127.0.0.1",20000);
   assert(node_segment_id_to_status_.size() == 0);
   self->send(*segment_exec_tracker_actor, ExitAtom::value);
