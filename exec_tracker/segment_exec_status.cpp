@@ -113,8 +113,9 @@ bool SegmentExecStatus::UpdateStatus(ExecStatus exec_status, string exec_info,
       actor_system_config cfg1;
       actor_system system {cfg1.load<io::middleman>()};
       scoped_actor self{system};
-      auto segment_exec_tracker_actor= system.middleman().remote_actor("127.0.0.1",20000);
-      self->send(*segment_exec_tracker_actor,ReportSAtom::value, this);
+      auto segment_exec_tracker_actor =
+          system.middleman().remote_actor("127.0.0.1", 20000);
+      self->send(*segment_exec_tracker_actor, ReportSAtom::value this);
     }
   } else {
     lock_.release();
