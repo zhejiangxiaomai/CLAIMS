@@ -32,8 +32,8 @@ using claims::MasterNode;
 using claims::SegmentExecTracker;
 using claims::SlaveNode;
 using claims::StmtExecTracker;
-//using caf::actor_system_config;
-//using namespace caf;
+// using caf::actor_system_config;
+using namespace caf;
 class Catalog;
 class IteratorExecutorSlave;
 class BlockManager;
@@ -51,7 +51,7 @@ class Environment {
   ResourceManagerMaster* getResourceManagerMaster();
   InstanceResourceManager* getResourceManagerSlave();
   NodeID getNodeID() const;
-  void setNodeID(NodeID node_id){ node_id_ = node_id ;}
+  void setNodeID(NodeID node_id) { node_id_ = node_id; }
   claims::catalog::Catalog* getCatalog() const;
   ThreadPool* getThreadPool() const;
   IteratorExecutorSlave* getIteratorExecutorSlave() const;
@@ -66,7 +66,8 @@ class Environment {
 
   StmtExecTracker* get_stmt_exec_tracker() { return stmt_exec_tracker_; }
   SegmentExecTracker* get_segment_exec_tracker() { return seg_exec_tracker_; }
-  CafConfig* get_caf_config() { return caf_config;}
+  CafConfig* get_caf_config() { return caf_config; }
+
  private:
   void AnnounceCafMessage();
   void readConfigFile();
@@ -116,15 +117,15 @@ class Environment {
    * ResouceManagerMaster and ResourceManagerSlave.
    */
 };
-//caf config
- class CafConfig : public actor_system_config {
+// caf config
+class CafConfig : public actor_system_config {
  public:
   CafConfig() {
-   load<io::middleman>();
-//       .add_message_type<ProjectionID>("ProjectionID")
-//                        .add_message_type<PartitionID>("PartitionID")
-//                        .add_message_type<ExchangeID>("ExchangeID")
-//                        .add_message_type<StorageBudgetMessage>("StorageBudgetMessage");
-   }
- };
+    load<io::middleman>();
+    //       .add_message_type<ProjectionID>("ProjectionID")
+    //                        .add_message_type<PartitionID>("PartitionID")
+    //                        .add_message_type<ExchangeID>("ExchangeID")
+    //                        .add_message_type<StorageBudgetMessage>("StorageBudgetMessage");
+  }
+};
 #endif /* ENVIRONMENT_H_ */

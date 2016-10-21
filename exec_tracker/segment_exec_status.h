@@ -28,7 +28,7 @@
 
 #ifndef EXEC_TRACKER_SEGMENT_EXEC_STATUS_H_
 #define EXEC_TRACKER_SEGMENT_EXEC_STATUS_H_
-//#define CAF_ALLOW_UNSAFE_MESSAGE_TYPE(SegmentExecStatus);
+
 #include "../common/error_define.h"
 #include "../exec_tracker/segment_exec_tracker.h"
 #include "../node_manager/base_node.h"
@@ -36,9 +36,11 @@
 
 #include "../utility/lock.h"
 #include "caf/all.hpp"
+#include "caf/io/all.hpp"
 #include <atomic>
-using std::string;
 
+using std::string;
+using namespace caf;
 namespace claims {
 const int TryReportTimes = 20;
 // due to the conflict between deleting SegmentExecStatus and reporting the
@@ -50,6 +52,7 @@ const int TryReportTimes = 20;
 class SegmentExecStatus {
  public:
   enum ExecStatus { kError, kOk, kCancelled, kDone };
+  SegmentExecStatus(const SegmentExecStatus& seg);
   SegmentExecStatus(NodeSegmentID node_segment_id, unsigned int coor_node_id);
   SegmentExecStatus(NodeSegmentID node_segment_id);
   virtual ~SegmentExecStatus();
@@ -68,7 +71,7 @@ class SegmentExecStatus {
   void set_exec_info(string exec_info) { exec_info_ = exec_info; }
   bool is_cancelled() { return kCancelled == exec_status_; }
 
-//  caf::expected<caf::actor> coor_actor_;
+  //  caf::expected<caf::actor> coor_actor_;
   Lock lock_;
   std::atomic_bool stop_report_;
 
@@ -79,17 +82,13 @@ class SegmentExecStatus {
   ExecStatus exec_status_;
   RetCode ret_code_;
   string exec_info_;
-// private:
-
-
+  // private:
 };
-//template <class Inspector>
-//typename Inspector::result_type inspect(Inspector& f, SegmentExecStatus& x) {
-//     return f(caf::meta::type_name("SegmentExecStatus"),
-//              x.exec_status_,x.ret_code_,x.exec_info_,
-//              x.coor_node_id_,x.node_segment_id_.first,x.node_segment_id_.second,x.lock_);
-//}
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(SegmentExecStatus);
+template <class Inspector>
+typename Inspector::result_type inspect(Inspector& f, SegmentExecStatus& x) {
+  return f(caf::meta::type_name("SegmentExecStatus"), x.exec_status_,
+           x.ret_code_, x.exec_info_, x.coor_node_id_);
+}
 #define UNLIKELY(expr) __builtin_expect(!!(expr), 0)
 
 #define RETURN_IF_CANCELLED(exec_status)                                \
@@ -103,5 +102,5 @@ CAF_ALLOW_UNSAFE_MESSAGE_TYPE(SegmentExecStatus);
   } while (false)
 
 }  // namespace claims
-
+// CAF_ALLOW_UNSAFE_MESSAGE_TYPE(claims::SegmentExecStatus);
 #endif  //  EXEC_TRACKER_SEGMENT_EXEC_STATUS_H_

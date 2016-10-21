@@ -39,8 +39,19 @@ using std::string;
 using std::endl;
 using claims::common::rNetworkError;
 using claims::common::rSendingTimeout;
+using namespace caf;
 namespace claims {
 
+SegmentExecStatus::SegmentExecStatus(const SegmentExecStatus& seg)
+    : node_segment_id_(seg.node_segment_id_),
+      coor_node_id_(seg.coor_node_id_),
+      exec_info_(seg.exec_info_),
+      exec_status_(seg.exec_status_),
+      ret_code_(seg.ret_code_),
+      logic_time_(seg.logic_time_),
+      stop_report_(false),
+      ReportErrorTimes(0) {
+}  // wrong construct function, just test send (,,this)
 SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id,
                                      unsigned int coor_node_id)
     : node_segment_id_(node_segment_id),
@@ -52,9 +63,9 @@ SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id,
       stop_report_(false),
       ReportErrorTimes(0) {
   //  RegisterToTracker();
-//  coor_actor_ =
-//      Environment::getInstance()->get_slave_node()->GetNodeActorFromId(
-//          coor_node_id);
+  //  coor_actor_ =
+  //      Environment::getInstance()->get_slave_node()->GetNodeActorFromId(
+  //          coor_node_id);
 }
 SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id)
     : node_segment_id_(node_segment_id),
@@ -111,10 +122,11 @@ bool SegmentExecStatus::UpdateStatus(ExecStatus exec_status, string exec_info,
     if (need_report) {
       ++logic_time_;
       actor_system_config cfg1;
-      actor_system system {cfg1.load<io::middleman>()};
+      actor_system system{cfg1.load<io::middleman>()};
       scoped_actor self{system};
-      auto segment_exec_tracker_actor= system.middleman().remote_actor("127.0.0.1",20000);
-      self->send(*segment_exec_tracker_actor,ReportSAtom::value, this);
+      auto segment_exec_tracker_actor =
+          system.middleman().remote_actor("127.0.0.1", 20000);
+      self->send(*segment_exec_tracker_actor, ReportSAtom::value, *this);
     }
   } else {
     lock_.release();

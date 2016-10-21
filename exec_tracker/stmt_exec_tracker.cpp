@@ -39,21 +39,21 @@
 using std::make_pair;
 using std::string;
 using namespace caf;
-//using caf::actor_system;
+// using caf::actor_system;
 using claims::common::rCouldnotFindCancelQueryId;
 namespace claims {
 
-class StmtExecTrackerActor : public event_based_actor{
+class StmtExecTrackerActor : public event_based_actor {
  public:
-  StmtExecTrackerActor(actor_config& cfg, StmtExecTracker *stmt_exec_tracker):
-    event_based_actor(cfg),stmtes(stmt_exec_tracker){}
+  StmtExecTrackerActor(actor_config& cfg, StmtExecTracker* stmt_exec_tracker)
+      : event_based_actor(cfg), stmtes(stmt_exec_tracker) {}
 
   behavior make_behavior() override {
     become(CheckStmtExecStatus());
     return {};
-    }
+  }
   behavior CheckStmtExecStatus() {
-       return {
+    return {
         [=](CheckStmtESAtom) {
           stmtes->lock_.acquire();
           for (auto it = stmtes->query_id_to_stmtes_.begin();
@@ -77,39 +77,36 @@ class StmtExecTrackerActor : public event_based_actor{
           stmtes->lock_.release();
           stmtes->logic_time_++;
           delayed_send(this, std::chrono::milliseconds(kCheckIntervalTime),
-                             CheckStmtESAtom::value);
+                       CheckStmtESAtom::value);
         },
         [=](ExitAtom) { quit(); },
         [&](const error& err) {
-              LOG(WARNING)<<"stmt checking receives unkown message"<<std::endl;
-        }
-       };
+          LOG(WARNING) << "stmt checking receives unkown message" << std::endl;
+        }};
   }
-  StmtExecTracker * stmtes;
+  StmtExecTracker* stmtes;
 };
 
-
-StmtExecTracker::StmtExecTracker():
-    query_id_gen_(0), logic_time_(0) {
+StmtExecTracker::StmtExecTracker() : query_id_gen_(0), logic_time_(0) {
   actor_system_config cfg1;
   cfg1.load<io::middleman>();
-  actor_system system {cfg1};
+  actor_system system{cfg1};
   auto stmt_exec_tracker_ = system.spawn<StmtExecTrackerActor>(this);
-  auto expected = system.middleman().publish(stmt_exec_tracker_,20001,"127.0.0.1",true);
-  if(!expected){
-     std::cerr << "*** publish failed: "
-              << system.render(expected.error()) << endl;
+  auto expected =
+      system.middleman().publish(stmt_exec_tracker_, 20001, "127.0.0.1", true);
+  if (!expected) {
+    std::cerr << "*** publish failed: " << system.render(expected.error())
+              << endl;
   }
- }
-
+}
 
 StmtExecTracker::~StmtExecTracker() {
   actor_system_config cfg1;
   cfg1.load<io::middleman>();
-  actor_system system {cfg1};
+  actor_system system{cfg1};
   caf::scoped_actor self{system};
   assert(query_id_to_stmtes_.size() == 0);
-  auto stmt_exec_tracker_ = system.middleman().remote_actor("127.0.0.1",20000);
+  auto stmt_exec_tracker_ = system.middleman().remote_actor("127.0.0.1", 20000);
   self->send(*stmt_exec_tracker_, ExitAtom::value);
 }
 
@@ -151,7 +148,7 @@ RetCode StmtExecTracker::CancelStmtExec(u_int64_t query_id) {
   lock_.release();
   return rSuccess;
 }
-//behavior StmtExecTracker::make_behavior()
+// behavior StmtExecTracker::make_behavior()
 //{
 //  become(CheckStmtExecStatus,this);
 //  actor_system_config cfg;
@@ -161,7 +158,7 @@ RetCode StmtExecTracker::CancelStmtExec(u_int64_t query_id) {
 //  self->send(this, CheckStmtESAtom::value);
 //  return {};
 //}
-//behavior StmtExecTracker::CheckStmtExecStatus(caf::event_based_actor* self,
+// behavior StmtExecTracker::CheckStmtExecStatus(caf::event_based_actor* self,
 //                                          StmtExecTracker* stmtes) {
 ////  self->become(
 //     return {
@@ -187,7 +184,8 @@ RetCode StmtExecTracker::CancelStmtExec(u_int64_t query_id) {
 //        }
 //        stmtes->lock_.release();
 //        stmtes->logic_time_++;
-//        self->delayed_send(self, std::chrono::milliseconds(kCheckIntervalTime),
+//        self->delayed_send(self,
+//        std::chrono::milliseconds(kCheckIntervalTime),
 //                           CheckStmtESAtom::value);
 //      },
 //      [=](ExitAtom) { self->quit(); },

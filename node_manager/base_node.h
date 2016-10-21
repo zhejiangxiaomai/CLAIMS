@@ -46,7 +46,7 @@ using std::cout;
 using std::endl;
 using std::map;
 using std::vector;
-using caf::actor;
+// using caf::actor;
 
 using namespace caf;
 
@@ -68,14 +68,13 @@ using Updatelist = caf::atom_constant<caf::atom("updatelist")>;
 using SyncNodeInfo = caf::atom_constant<caf::atom("syncinfo")>;
 using ReportSAtom = caf::atom_constant<caf::atom("report")>;
 
-
 const int kMaxTryTimes = 5;
 const int kTimeout = 5;
 class MemoryInfo {};
 class DiskInfo {};
 typedef pair<string, uint16_t> NodeAddr;
-//class Caf_Config : public actor_system_config {
-//public:
+// class Caf_Config : public actor_system_config {
+// public:
 //  Caf_Config() {
 //   load<io::middleman>();
 //  }
@@ -96,7 +95,7 @@ class BaseNode {
   void ReadMasterAddr();
   NodeAddr GetNodeAddrFromId(const unsigned int id);
   expected<actor>& GetNodeActorFromId(const unsigned int id);
-//  caf::expected<caf::actor>& GetMasterActor() { return master_actor_; }
+  //  caf::expected<caf::actor>& GetMasterActor() { return master_actor_; }
   vector<NodeID> GetAllNodeID();
 
   bool operator==(const BaseNode& r) const {
@@ -119,13 +118,13 @@ class BaseNode {
   NodeAddr node_addr_;
   NodeAddr master_addr_;
   Lock lock_;
-//  caf::expected<caf::actor> master_actor_;
-//  actor_system_config cfg;
+  //  caf::expected<caf::actor> master_actor_;
+  //  actor_system_config cfg;
 
  public:
-//  actor_system system;
+  //  actor_system system;
   std::unordered_map<int, pair<string, uint16_t>> node_id_to_addr_;
-//  std::unordered_map<int, actor> node_id_to_actor_;
+  //  std::unordered_map<int, actor> node_id_to_actor_;
   std::unordered_map<int, caf::expected<caf::actor>> node_id_to_actor_;
 };
 
@@ -133,7 +132,6 @@ template <class Inspector>
 typename Inspector::result_type inspect(Inspector& f, BaseNode& x) {
   return f(meta::type_name("BaseNode"), x.node_id_to_addr_);
 }
-
 }
 // namespace claims
 
