@@ -31,6 +31,7 @@ class IteratorExecutorMaster {
 
  private:
   static IteratorExecutorMaster* _instance;
+  actor_system system_;
 };
 
 #endif /* ITERATOREXECUTORMASTER_H_ */

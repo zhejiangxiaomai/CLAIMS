@@ -41,7 +41,9 @@ using std::string;
 using caf::event_based_actor;
 using caf::actor_config;
 using caf::behavior;
-
+using caf::actor;
+using caf::actor_system_config;
+using caf::actor_system;
 namespace claims {
 // first=query_id, second=segment_id*kMaxNodeNum + node_id
 #define kReportIntervalTime 3000
@@ -64,9 +66,10 @@ class SegmentExecTracker {
                         SegmentExecStatus* seg_exec_status);
   RetCode UnRegisterSegES(NodeSegmentID node_segment_id);
   // report all remote_segment_status located at slave node
-//  static behavior ReportAllSegStatus(caf::event_based_actor* self,
-//                                 SegmentExecTracker* seg_exec_tracker);
-
+  static behavior ReportAllSegStatus(
+      caf::event_based_actor* self, SegmentExecTracker* seg_exec_tracker);
+  actor_system system_;
+  actor segment_exec_tracker_actor_;
  private:
   boost::unordered_map<NodeSegmentID, SegmentExecStatus*>
       node_segment_id_to_status_;

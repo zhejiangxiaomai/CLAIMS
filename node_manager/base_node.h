@@ -73,19 +73,15 @@ const int kTimeout = 5;
 class MemoryInfo {};
 class DiskInfo {};
 typedef pair<string, uint16_t> NodeAddr;
-// class Caf_Config : public actor_system_config {
-// public:
-//  Caf_Config() {
-//   load<io::middleman>();
-//  }
-//};
+typedef std::unordered_map<int, pair<string, uint16_t>> id_map;
+
 
 class BaseNode {
  public:
   BaseNode();
   BaseNode(string node_ip, uint16_t node_port);
   virtual ~BaseNode();
-  void set_node_id(unsigned int node_id) { node_id_ = node_id; }
+  void set_node_id(uint32_t node_id) { node_id_ = node_id; }
   unsigned int get_node_id() { return node_id_; }
   string get_node_ip() { return node_addr_.first; }
   uint16_t get_node_port() { return node_addr_.second; }
@@ -114,12 +110,10 @@ class BaseNode {
   }
 
  protected:
-  unsigned int node_id_;
+  uint32_t node_id_;
   NodeAddr node_addr_;
   NodeAddr master_addr_;
   Lock lock_;
-  //  caf::expected<caf::actor> master_actor_;
-  //  actor_system_config cfg;
 
  public:
   //  actor_system system;
@@ -132,7 +126,6 @@ template <class Inspector>
 typename Inspector::result_type inspect(Inspector& f, BaseNode& x) {
   return f(meta::type_name("BaseNode"), x.node_id_to_addr_);
 }
-}
-// namespace claims
+}  // namespace claims
 
 #endif  //  NODE_MANAGER_BASE_NODE_H_

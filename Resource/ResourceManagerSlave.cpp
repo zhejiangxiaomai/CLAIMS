@@ -17,32 +17,33 @@ using caf::after;
 using claims::NodeAddr;
 using claims::OkAtom;
 using claims::StorageBudgetAtom;
-InstanceResourceManager::InstanceResourceManager() {}
+InstanceResourceManager::InstanceResourceManager()
+          :system_(*dynamic_cast<actor_system_config *>
+(Environment::getInstance()->get_caf_config())) {}
 
 InstanceResourceManager::~InstanceResourceManager() {}
 
 void InstanceResourceManager::ReportStorageBudget(
     StorageBudgetMessage& message) {
-  actor_system system {*Environment::getInstance()->get_caf_config()};
-  caf::scoped_actor self{system};
-//  caf::expected<caf::actor> master_actor =
-//      Environment::getInstance()->get_slave_node()->GetMasterActor();
-  caf::expected<caf::actor> master_actor = system.middleman().
-        remote_actor(Environment::getInstance()->get_slave_node()->GetMasterAddr().first,
-                     Environment::getInstance()->get_slave_node()->GetMasterAddr().second);
-  self->request(*master_actor,std::chrono::seconds(30), StorageBudgetAtom::value, message)
+  caf::scoped_actor self{system_};
+  caf::expected<caf::actor> master_actor = system_.middleman().
+        remote_actor(Environment::getInstance()->
+                     get_slave_node()->GetMasterAddr().first,
+                     Environment::getInstance()->
+                     get_slave_node()->GetMasterAddr().second);
+  self->request(*master_actor, std::chrono::seconds(30),
+                StorageBudgetAtom::value, message)
       .receive(
       [=](OkAtom) {
       LOG(INFO) << "reporting storage budget is ok!" << endl; }
       ,
       [&](const error& err) {
-        if(err == sec::request_timeout){
+        if (err == sec::request_timeout) {
           LOG(ERROR) << "reporting storage budget timeout!"<< endl;
         }
-      LOG(ERROR) << "reporting storage budget error!"<<system.render(err)<< endl;
+      LOG(ERROR) << "reporting storage budget error!"
+          << system_.render(err) << endl;
       });
-     LOG(INFO)<<"node :"<<message.nodeid<<"report storage finish"<<endl;
-
 }
 
 void InstanceResourceManager::setStorageBudget(unsigned long memory,

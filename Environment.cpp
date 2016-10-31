@@ -9,7 +9,7 @@
 #include "caf/all.hpp"
 #include <map>
 #include <utility>
-#include "common/Message.h"
+
 #include "exec_tracker/stmt_exec_tracker.h"
 #include "exec_tracker/segment_exec_tracker.h"
 #include "node_manager/base_node.h"
@@ -43,6 +43,8 @@ using claims::NodeAddr;
 using claims::NodeSegmentID;
 using claims::StmtExecTracker;
 
+
+
 Environment* Environment::_instance = 0;
 
 Environment::Environment(bool ismaster) : ismaster_(ismaster) {
@@ -53,7 +55,7 @@ Environment::Environment(bool ismaster) : ismaster_(ismaster) {
   readConfigFile();
   initializeExpressionSystem();
   portManager = PortManager::getInstance();
-
+  caf_config_ = new CafConfig();
   if (ismaster) {
     catalog_ = claims::catalog::Catalog::getInstance();
     logging_->log("restore the catalog ...");
@@ -83,7 +85,7 @@ Environment::Environment(bool ismaster) : ismaster_(ismaster) {
 
   /*Before initializing Resource Manager, the instance ip and port should be
    * decided.*/
-  AnnounceCafMessage();
+//  AnnounceCafMessage();
   initializeResourceManager();
   // should after above
   InitMembership();
@@ -144,8 +146,7 @@ void Environment::readConfigFile() {
   ip = (const char*)cfg.lookup("ip");
 }
 
-void Environment::AnnounceCafMessage() {
-    CafConfig *caf_config = new CafConfig();
+//void Environment::AnnounceCafMessage() {
     //  announce<StorageBudgetMessage>(
 //      "StorageBudgetMessage", &StorageBudgetMessage::nodeid,
 //      &StorageBudgetMessage::memory_budget, &StorageBudgetMessage::disk_budget);
@@ -158,7 +159,7 @@ void Environment::AnnounceCafMessage() {
 //  announce<BaseNode>("BaseNode", &BaseNode::node_id_to_addr_);
 //  announce<NodeSegmentID>("NodeSegmentID", &NodeSegmentID::first,
 //                          &NodeSegmentID::second);
-}
+//}
 void Environment::initializeStorage() {
   if (ismaster_) {
     blockManagerMaster_ = BlockManagerMaster::getInstance();
@@ -234,4 +235,14 @@ bool Environment::initializeThreadPool() {
 
 IteratorExecutorSlave* Environment::getIteratorExecutorSlave() const {
   return iteratorExecutorSlave;
+}
+
+CafConfig::CafConfig() {
+      add_message_type<StorageBudgetMessage>("StorageBudgetMessage");
+      add_message_type<ProjectionID>("ProjectionID");
+      add_message_type<PartitionID>("PartitionID");
+      add_message_type<ExchangeID>("ExchangeID");
+      add_message_type<BaseNode>("BaseNode");
+      add_message_type<NodeSegmentID>("NodeSegmentID");
+      load<io::middleman>();
 }

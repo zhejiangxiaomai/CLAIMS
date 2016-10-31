@@ -39,7 +39,8 @@
 #include "../exec_tracker/segment_exec_tracker.h"
 #include "../utility/lock.h"
 using std::string;
-//using caf::actor_config;
+using caf::actor_config;
+using caf::actor_system_config;
 namespace claims {
 #define kMaxNodeNum 10000
 #define kCheckIntervalTime 5000
@@ -54,23 +55,24 @@ class StmtExecTracker {
   RetCode RegisterStmtES(StmtExecStatus* stmtes);
   RetCode UnRegisterStmtES(u_int64_t query_id);
   RetCode CancelStmtExec(u_int64_t query_id);
-//  behavior make_behavior() override;
   // check every StmtExecStatus in caf's thread, should be static due to used
   // for spawning caf thread
-//  static behavior CheckStmtExecStatus(caf::event_based_actor* self,
-//                                  StmtExecTracker* stmtes);
+  static behavior CheckStmtExecStatus(caf::event_based_actor* self,
+                                  StmtExecTracker* stmtes);
   // according to StmtExecTracker to find corresponding stmt_status, then to
   // update segment_status
   bool UpdateSegExecStatus(NodeSegmentID node_segment_id,
                            SegmentExecStatus::ExecStatus exec_status,
                            string exec_info);
   u_int64_t get_logic_time() { return logic_time_; }
+  actor_system system_;
 
  private:
   std::atomic_ullong logic_time_;
   std::atomic_ullong query_id_gen_;
   std::unordered_map<u_int64_t, StmtExecStatus*> query_id_to_stmtes_;
   Lock lock_;
+  actor stmt_exec_tracker_actor_;
 };
 
 }  // namespace claims

@@ -27,7 +27,7 @@
  */
 
 #include "./base_node.h"
-
+#include "../Environment.h"
 #include <libconfig.h++>
 #include <string>
 #include <utility>
@@ -41,19 +41,6 @@ using std::string;
 using std::vector;
 namespace claims {
 
-//BaseNode::BaseNode() :
-//    node_id_(-1),system(cfg.load<io::middleman>()),
-//    master_actor_ (system.middleman().remote_actor("127.0.0.1",10000)) {
-//  ReadNodeAddr();
-//  ReadMasterAddr();
-//  master_actor_ = system.middleman().remote_actor(master_addr_.first,master_addr_.second);
-//}
-//BaseNode::BaseNode(string node_ip, uint16_t node_port)
-//    : node_addr_(make_pair(node_ip, node_port)), node_id_(-1),cfg(),system(cfg),
-//      master_actor_ (system.middleman().remote_actor("127.0.0.1",10000)) {
-//  ReadMasterAddr();
-//  master_actor_ = system.middleman().remote_actor(master_addr_.first,master_addr_.second);
-//}
 BaseNode::BaseNode() :
     node_id_(-1) {
   ReadNodeAddr();
@@ -100,11 +87,11 @@ caf::expected<caf::actor> &BaseNode::GetNodeActorFromId(const unsigned int id) {
   if (it != node_id_to_actor_.end()) {
     return it->second;
   } else {
-    actor_system_config cfg;
-    actor_system system {cfg.load<io::middleman>()};
+    caf::actor_system system{*dynamic_cast<actor_system_config *>
+        (Environment::getInstance()->get_caf_config())};
     // need fix
-    auto null_actor = system.middleman().remote_actor("256.256.256.256",10000);
-    LOG(WARNING) <<"target actor is null actor"<<endl;
+    auto null_actor = system.middleman().remote_actor("256.256.256.256", 10000);
+    LOG(WARNING) << "target actor is null actor"<< std::endl;
     return null_actor;
   }
 }

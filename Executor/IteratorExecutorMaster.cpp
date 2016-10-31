@@ -19,7 +19,9 @@
 using claims::SendPlanAtom;
 IteratorExecutorMaster* IteratorExecutorMaster::_instance = 0;
 
-IteratorExecutorMaster::IteratorExecutorMaster() { _instance = this; }
+IteratorExecutorMaster::IteratorExecutorMaster()
+      :system_(*dynamic_cast<actor_system_config *>
+(Environment::getInstance()->get_caf_config())) { _instance = this; }
 
 IteratorExecutorMaster::~IteratorExecutorMaster() { _instance = 0; }
 
@@ -45,28 +47,12 @@ bool IteratorExecutorMaster::ExecuteBlockStreamIteratorsOnSite(
       it, target_id, query_id, segment_id,
       Environment::getInstance()->get_slave_node()->get_node_id());
   string str = PhysicalQueryPlan::TextSerializePlan(*physical_plan);
-  actor_system system {*Environment::getInstance()->get_caf_config()};
-  scoped_actor self{system};
-  LOG(INFO)<<"!!!!!Master send Plan!!!!"<<endl;
+  scoped_actor self{system_};
+  LOG(INFO) << "!!!!!Master send Plan!!!!" << endl;
   expected<actor> target_actor =
           Environment::getInstance()->get_master_node()->GetNodeActorFromId(
               target_id);
-//  if (!target_actor) {
-//           std::cerr << "unable to connect to node A: "
-//           << system.render(target_actor.error()) << std::endl;
-//  } else {
-         self->send(*target_actor, SendPlanAtom::value, str, query_id, segment_id);
-//  }
-  //  try {
-    //warning: remote_actor may not reach.
-
-//  } catch (caf::bind_failure& e) {
-//    LOG(ERROR)
-//        << "master sending plan binds port error when connecting remote actor";
-//  } catch (caf::network_error& e) {
-//    LOG(ERROR) << "master sending plan connect to remote node error due to "
-//                  "network error!";
-//  }
+  self->send(*target_actor, SendPlanAtom::value, str, query_id, segment_id);
   DELETE_PTR(physical_plan);
   LOG(INFO) << "master send serialized plan to target slave : " << target_id
             << " succeed!" << endl;

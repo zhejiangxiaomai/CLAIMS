@@ -34,15 +34,12 @@
 #include "caf/all.hpp"
 #include "caf/behavior.hpp"
 #include <string>
-//using caf::event_based_actor;
 using std::string;
-//using caf::behavior;
 
 namespace claims {
 class SlaveNode : public BaseNode {
  public:
   friend class SlaveNodeActor;
-  //  class SlaveNodeActor;
   SlaveNode();
   SlaveNode(string node_ip, uint16_t node_port);
   void CreateActor();
@@ -52,6 +49,8 @@ class SlaveNode : public BaseNode {
   static SlaveNode* GetInstance();
   RetCode AddOneNode(const unsigned int& node_id, const string& node_ip,
                      const uint16_t& node_port);
+
+  actor_system system_;
  private:
   static SlaveNode* instance_;
   unsigned int heartbeat_count_;

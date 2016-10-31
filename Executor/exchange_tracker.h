@@ -39,10 +39,10 @@ class ExchangeTracker {
                                   expected<actor>& target_actor);
   void printAllExchangeId() const;
   NodeAddress GetExchAddr(ExchangeID exch_id);
-
  private:
   boost::unordered_map<ExchangeID, std::string> id_to_port;
   Lock lock_;
+  actor_system system_;
 };
 
 #endif /* EXCHANGETRACKER_H_ */

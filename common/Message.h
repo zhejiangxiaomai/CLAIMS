@@ -38,15 +38,15 @@ using claims::NodeAddr;
 using claims::physical_operator::PhysicalOperatorBase;
 // It's better to use fixed length information for implementation concern.
 struct StorageBudgetMessage {
-  StorageBudgetMessage(const int& disk_budget, const int& memory_budget,
-                       const int& nodeid)
+  StorageBudgetMessage(const unsigned int& disk_budget, const unsigned int& memory_budget,
+                       const unsigned int& nodeid)
       : disk_budget(disk_budget),
         memory_budget(memory_budget),
         nodeid(nodeid) {}
   StorageBudgetMessage() : nodeid(1000000), disk_budget(0), memory_budget(0) {}
-  int disk_budget;
-  int memory_budget;
-  int nodeid;
+  unsigned int disk_budget;
+  unsigned int memory_budget;
+  unsigned int nodeid;
   bool operator==(const StorageBudgetMessage& lhs) const {
     return lhs.nodeid == nodeid && lhs.memory_budget == memory_budget &&
            disk_budget == lhs.disk_budget;

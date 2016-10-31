@@ -28,19 +28,22 @@
 
 #ifndef EXEC_TRACKER_SEGMENT_EXEC_STATUS_H_
 #define EXEC_TRACKER_SEGMENT_EXEC_STATUS_H_
+#include <string>
+#include <atomic>
 
 #include "../common/error_define.h"
 #include "../exec_tracker/segment_exec_tracker.h"
 #include "../node_manager/base_node.h"
-#include <string>
+
 
 #include "../utility/lock.h"
 #include "caf/all.hpp"
 #include "caf/io/all.hpp"
-#include <atomic>
 
 using std::string;
+
 using namespace caf;
+
 namespace claims {
 const int TryReportTimes = 20;
 // due to the conflict between deleting SegmentExecStatus and reporting the
@@ -54,7 +57,7 @@ class SegmentExecStatus {
   enum ExecStatus { kError, kOk, kCancelled, kDone };
   SegmentExecStatus(const SegmentExecStatus& seg);
   SegmentExecStatus(NodeSegmentID node_segment_id, unsigned int coor_node_id);
-  SegmentExecStatus(NodeSegmentID node_segment_id);
+  explicit SegmentExecStatus(NodeSegmentID node_segment_id);
   virtual ~SegmentExecStatus();
   // first cancel data source, e.t. exchange merger
   RetCode CancelSegExec();
@@ -71,7 +74,6 @@ class SegmentExecStatus {
   void set_exec_info(string exec_info) { exec_info_ = exec_info; }
   bool is_cancelled() { return kCancelled == exec_status_; }
 
-  //  caf::expected<caf::actor> coor_actor_;
   Lock lock_;
   std::atomic_bool stop_report_;
 
@@ -79,16 +81,36 @@ class SegmentExecStatus {
   NodeSegmentID node_segment_id_;
   unsigned int coor_node_id_;
   u_int64_t logic_time_;
-  ExecStatus exec_status_;
   RetCode ret_code_;
+
+// private:
+  ExecStatus exec_status_;
   string exec_info_;
-  // private:
+
 };
 template <class Inspector>
 typename Inspector::result_type inspect(Inspector& f, SegmentExecStatus& x) {
-  return f(caf::meta::type_name("SegmentExecStatus"), x.exec_status_,
-           x.ret_code_, x.exec_info_, x.coor_node_id_);
+  return f(caf::meta::type_name("SegmentExecStatus"),x.exec_info_,x.exec_status_,
+           x.ret_code_, x.coor_node_id_);
 }
+//template <class Inspector>
+//typename std::enable_if<Inspector::reads_state,
+//  typename Inspector::result_type>::type
+//    inspect(Inspector& f, SegmentExecStatus& x) {
+//      return f(meta::type_name("SegmentExecStatus"), x.get_exec_status(), x.get_exec_info());
+//}
+
+//template <class Inspector>
+//typename std::enable_if<Inspector::writes_state,
+//  typename Inspector::result_type>::type
+//    inspect(Inspector& f, SegmentExecStatus& x) {
+//  SegmentExecStatus::ExecStatus exec_status;
+//  string exec_info;
+//  x.set_exec_status(exec_status);
+//  x.set_exec_info(exec_info);
+//return f(meta::type_name("SegmentExecStatus"), exec_status, exec_info);
+//}
+
 #define UNLIKELY(expr) __builtin_expect(!!(expr), 0)
 
 #define RETURN_IF_CANCELLED(exec_status)                                \
@@ -102,5 +124,4 @@ typename Inspector::result_type inspect(Inspector& f, SegmentExecStatus& x) {
   } while (false)
 
 }  // namespace claims
-// CAF_ALLOW_UNSAFE_MESSAGE_TYPE(claims::SegmentExecStatus);
 #endif  //  EXEC_TRACKER_SEGMENT_EXEC_STATUS_H_

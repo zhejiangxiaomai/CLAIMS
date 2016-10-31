@@ -49,9 +49,9 @@ SegmentExecStatus::SegmentExecStatus(const SegmentExecStatus& seg)
       exec_status_(seg.exec_status_),
       ret_code_(seg.ret_code_),
       logic_time_(seg.logic_time_),
-      stop_report_(false),
-      ReportErrorTimes(0) {
-}  // wrong construct function, just test send (,,this)
+      stop_report_(std::move(&seg.stop_report_)),
+      ReportErrorTimes(std::move(&seg.ReportErrorTimes)) {
+}
 SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id,
                                      unsigned int coor_node_id)
     : node_segment_id_(node_segment_id),
@@ -62,10 +62,6 @@ SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id,
       logic_time_(0),
       stop_report_(false),
       ReportErrorTimes(0) {
-  //  RegisterToTracker();
-  //  coor_actor_ =
-  //      Environment::getInstance()->get_slave_node()->GetNodeActorFromId(
-  //          coor_node_id);
 }
 SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id)
     : node_segment_id_(node_segment_id),

@@ -43,13 +43,13 @@
 using caf::make_message;
 using std::make_pair;
 using claims::common::rConRemoteActorError;
-using namespace claims::catalog;
+using namespace catalog;
 namespace claims {
 MasterNode* MasterNode::instance_ = 0;
 class MasterNodeActor : public event_based_actor {
  public:
-  MasterNodeActor( actor_config& cfg,MasterNode* master_node) :
-       event_based_actor(cfg),master_node_(master_node) {}
+  MasterNodeActor( actor_config& cfg, MasterNode* master_node) :
+       event_based_actor(cfg), master_node_(master_node) {}
 
   behavior make_behavior() override {
     become(MainWork());
@@ -65,68 +65,74 @@ class MasterNodeActor : public event_based_actor {
           */
           unsigned int tmp_node_id = -1;
           bool is_reregister = false;
-          for(auto it = master_node_->node_id_to_addr_.begin();
-              it != master_node_->node_id_to_addr_.end();++it)
-          {
-            if((it->second.first == ip))
-            {
+          for (auto it = master_node_->node_id_to_addr_.begin();
+              it != master_node_->node_id_to_addr_.end(); ++it) {
+            if ((it->second.first == ip)) {
               is_reregister = true;
               tmp_node_id = it->first;
             }
           }
-          if(is_reregister)
-          {
-            //find this slave is reregister, so remove old slave node info.
-            master_node_->RemoveOneNode(tmp_node_id,master_node_);
+          if (is_reregister) {
+            // find this slave is reregister, so remove old slave node info.
+            master_node_->RemoveOneNode(tmp_node_id, master_node_);
             master_node_->node_id_to_heartbeat_.erase(tmp_node_id);
             Environment::getInstance()
                           ->getResourceManagerMaster()
                           ->UnRegisterSlave(tmp_node_id);
-            LOG(INFO)<<"master remove old node :"<<tmp_node_id<<"info"<<endl;
+            LOG(INFO) << "master remove old node :"
+                << tmp_node_id << "info"<< endl;
           }
-          //add new slavenode info.
-          unsigned id = master_node_->AddOneNode(ip, port);
+          // add new slavenode info.
+          uint32_t id = master_node_->AddOneNode(ip, port);
           Environment::getInstance()
               ->getResourceManagerMaster()
               ->RegisterNewSlave(id);
-          LOG(INFO)<<"master Register slave node :"<<id<<"<"<<ip<<",  "<<port<<">"<<std::endl;
+          LOG(INFO) << "master Register slave node :" << id
+              << "<" << ip << ",  " << port << ">" << std::endl;
           // Sync node list of master.
           master_node_->SyncNodeList(master_node_);
-          return make_message(OkAtom::value, id, *((BaseNode*)master_node_));
+          return make_message( OkAtom::value, id
+                               , *(dynamic_cast<BaseNode*>(master_node_)));
         },
-        [=](HeartBeatAtom, unsigned int node_id_, string address_, uint16_t port_) -> caf::message {
-          auto it = master_node_->node_id_to_heartbeat_.find(node_id_);
-          //有可能再重启后两个不同的ip使用相同的nodeID 所以要避免
+        [=](HeartBeatAtom, unsigned int node_id,
+            string address, uint16_t port) -> caf::message {
+          auto it = master_node_->node_id_to_heartbeat_.find(node_id);
+          // void two hosts with different ip use same nodeid
           unsigned int isNormal = 2;
           if (it != master_node_->node_id_to_heartbeat_.end() &&
-              !(master_node_->node_id_to_addr_.find(node_id_)->second.first.compare(address_))){
-              //clear heartbeat count.
+              !(master_node_->node_id_to_addr_.find(node_id)
+                  ->second.first.compare(address))) {
+              // clear heartbeat count.
               it->second = 0;
               unsigned int id = 0;
               isNormal = 1;
-              return make_message(OkAtom::value, id, isNormal ,*((BaseNode*)master_node_));
-          }else{
-            LOG(INFO)<<"get heartbeat and register request from "<<address_<<",  "<<port_<<std::endl;
-            unsigned int id = master_node_->AddOneNode(address_, port_);
+              return make_message(OkAtom::value, id, isNormal
+                                  , *(dynamic_cast<BaseNode*>(master_node_)));
+          } else{
+            LOG(INFO) << "get heartbeat and register request from "
+                << address << ",  " << port <<std::endl;
+            unsigned int id = master_node_->AddOneNode(address, port);
             Environment::getInstance()
                           ->getResourceManagerMaster()
                           ->RegisterNewSlave(id);
-            LOG(INFO)<<"master Register slave node :"<<id<<endl;
-            master_node_->BroastNodeInfo(id,address_,port_);
-            return make_message(OkAtom::value, id, isNormal, *((BaseNode*)master_node_));
+            LOG(INFO) << "master Register slave node :" << id <<endl;
+            master_node_->BroastNodeInfo(id, address, port);
+            return make_message(OkAtom::value, id, isNormal,
+                                *(dynamic_cast<BaseNode*>(master_node_)));
           }
         },
         [=](Updatelist){
           bool is_losted = false;
-          if(master_node_->node_id_to_heartbeat_.size() > 0){
-            for (auto it = master_node_->node_id_to_heartbeat_.begin();it != master_node_->node_id_to_heartbeat_.end();)
-            {
-                  //Heartbeat count++
+          if (master_node_->node_id_to_heartbeat_.size() > 0) {
+            for (auto it = master_node_->node_id_to_heartbeat_.begin();
+                it != master_node_->node_id_to_heartbeat_.end();) {
+                  // Heartbeat count++
                   it->second++;
                   {
-                    if (it->second >= kMaxTryTimes){
+                    if (it->second >= kMaxTryTimes) {
                       is_losted = true;
-                      LOG(WARNING) <<"master : lost hearbeat from ( node "<<it->first<<")"<<endl;
+                      LOG(WARNING) << "master : lost hearbeat from ( node "
+                          << it->first << ")" <<endl;
                       auto node_id = it->first;
                       auto tmp_it = it;
                       it++;
@@ -135,16 +141,18 @@ class MasterNodeActor : public event_based_actor {
                       Environment::getInstance()
                         ->getResourceManagerMaster()
                         ->UnRegisterSlave(node_id);
-                      LOG(INFO)<<"master unRegister old node :"<<node_id<<"info"<<endl;
-                    }else{ it++;}
+                      LOG(INFO) << "master unRegister old node :"
+                          << node_id << "info" << endl;
+                    } else { it++;}
                   }
             }
           }
-          if(is_losted){
+          if (is_losted) {
              master_node_->SyncNodeList(master_node_);
-             is_losted=false;
+             is_losted = false;
           }
-          delayed_send(this, std::chrono::seconds(kTimeout/5), Updatelist::value);
+          delayed_send(this, std::chrono::seconds(kTimeout),
+                       Updatelist::value);
         },
         [&](StorageBudgetAtom, const StorageBudgetMessage& message) {
           Environment::getInstance()
@@ -187,7 +195,9 @@ MasterNode* MasterNode::GetInstance() {
   return instance_;
 }
 
-MasterNode::MasterNode() : node_id_gen_(0) {
+MasterNode::MasterNode() : node_id_gen_(0),
+    system_(*dynamic_cast<actor_system_config *>
+(Environment::getInstance()->get_caf_config())) {
   instance_ = this;
   set_node_id(0);
   ReadMasterAddr();
@@ -196,23 +206,27 @@ MasterNode::MasterNode() : node_id_gen_(0) {
 }
 
 MasterNode::MasterNode(string node_ip, uint16_t node_port)
-    : BaseNode(node_ip, node_port), node_id_gen_(0) {
+    : BaseNode(node_ip, node_port), node_id_gen_(0),
+      system_(*dynamic_cast<actor_system_config *>
+      (Environment::getInstance()->get_caf_config())) {
   CreateActor();
 }
 
 MasterNode::~MasterNode() { instance_ = NULL; }
 void MasterNode::CreateActor() {
-  actor_system_config cfg1;
-  cfg1.load<io::middleman>();
-  actor_system system {cfg1};
-  caf::expected<caf::actor> master_actor_ = system.spawn<MasterNodeActor>(this);
-  auto expected = system.middleman().publish(*master_actor_, get_node_port(), get_node_ip().c_str(), true);
-  if(!expected){
+  caf::expected<caf::actor> master_actor_ =
+        system_.spawn<MasterNodeActor>(this);
+//  LOG(INFO) << master_actor_.node().process_id() << "is master is process id";
+  auto expected = system_.middleman().publish(*master_actor_,
+                                             get_node_port(),
+                                             get_node_ip().c_str(), true);
+  if (!expected) {
     LOG(ERROR) << "connection error in publishing master actor port";
-  }else{
-    LOG(INFO) << "master ip port" << get_node_port() << " publish succeed!";
-    caf::scoped_actor self{system};
-    self->send(*master_actor_,Updatelist::value);
+  } else {
+    LOG(INFO) << "master ip port" << get_node_port()
+        <<"  " <<get_node_ip() << " publish succeed!";
+    caf::scoped_actor self{system_};
+    self->send(*master_actor_, Updatelist::value);
   }
 }
 void MasterNode::PrintNodeList() {
@@ -224,9 +238,7 @@ void MasterNode::PrintNodeList() {
 RetCode MasterNode::BroastNodeInfo(const unsigned int& node_id,
                                    const string& node_ip,
                                    const uint16_t& node_port) {
-  actor_system_config cfg;
-  actor_system system {cfg.load<io::middleman>()};
-  caf::scoped_actor self{system};
+  caf::scoped_actor self{system_};
   for (auto it = node_id_to_addr_.begin(); it != node_id_to_addr_.end(); ++it) {
     self->send(*node_id_to_actor_.at(it->first), BroadcastNodeAtom::value,
                node_id, node_ip, node_port);
@@ -234,33 +246,31 @@ RetCode MasterNode::BroastNodeInfo(const unsigned int& node_id,
   return rSuccess;
 }
 // should be atomic
-unsigned int MasterNode::AddOneNode(string node_ip, uint16_t node_port) {
-  actor_system_config cfg;
-  actor_system system {cfg.load<io::middleman>()};
+uint32_t MasterNode::AddOneNode(string node_ip, uint16_t node_port) {
   lock_.acquire();
   unsigned int node_id;
-  //If a slave has same ip with master, it get ID equals 0
-  if (node_ip == get_node_ip()){
+  // If a slave has same ip with master, it get ID equals 0
+  if (node_ip == get_node_ip()) {
     node_id = 0;
-  }else{
+  } else {
     node_id = ++node_id_gen_;
   }
   node_id_to_addr_.insert(
       make_pair((unsigned int)node_id, make_pair(node_ip, node_port)));
   node_id_to_heartbeat_.insert(make_pair((unsigned int)node_id, 0));
 
-  caf::expected<caf::actor> actor = system.middleman().remote_actor(node_ip, node_port);
-  if(!actor){
+  caf::expected<caf::actor> actor = system_.middleman().
+      remote_actor(node_ip, node_port);
+  if (!actor) {
     LOG(WARNING) << "cann't connect to node ( " << node_ip << " , " << node_port
                  << " ) and create remote actor failed!!";
     assert(false);
-  }else{
+  } else {
     node_id_to_actor_.insert(make_pair((unsigned int)node_id, actor));
     LOG(INFO) << "register one node( " << node_id << " < " << node_ip
               << " " << node_port << " > )" << std::endl;
   }
-
-  //BroastNodeInfo((unsigned int)node_id, node_ip, node_port);
+  // BroastNodeInfo((unsigned int)node_id, node_ip, node_port);
   lock_.release();
   return node_id;
 }
@@ -268,29 +278,29 @@ unsigned int MasterNode::AddOneNode(string node_ip, uint16_t node_port) {
  *
  *
  * */
-void MasterNode::RemoveOneNode(unsigned int node_id, MasterNode* master_node){
+void MasterNode::RemoveOneNode(unsigned int node_id, MasterNode* master_node) {
   master_node->lock_.acquire();
   master_node->node_id_to_addr_.erase(node_id);
   master_node->node_id_to_actor_.erase(node_id);
   master_node->lock_.release();
-
-  //clear the partition info of removed node.
+  // clear the partition info of removed node.
   Catalog* catalog = Catalog::getInstance();
   vector<TableID> table_id_list = catalog->GetAllTablesID();
-  for (auto table_id : table_id_list){
+  for (auto table_id : table_id_list) {
     TableDescriptor* table = catalog->getTable(table_id);
-    if(table != NULL){
-      vector<ProjectionDescriptor*>* projection_list =  table ->GetProjectionList();
-      if(projection_list != NULL)
-      {
-        for(auto projection : *projection_list){
+    if (table != NULL) {
+      vector<ProjectionDescriptor*>* projection_list
+          =  table ->GetProjectionList();
+      if (projection_list != NULL) {
+        for (auto projection : *projection_list) {
           Partitioner* partitioner = projection->getPartitioner();
-          if(partitioner != NULL){
-            vector<PartitionInfo *> partition_info_list = partitioner->getPartitionList();
-            if(partition_info_list.size() != 0){
-              for(auto partition_info : partition_info_list){
-                if(partition_info->get_location() == node_id){
-                  LOG(INFO)<<node_id<<"'s partition is unbinding"<<endl;
+          if (partitioner != NULL) {
+            vector<PartitionInfo *> partition_info_list
+              = partitioner->getPartitionList();
+            if (partition_info_list.size() != 0) {
+              for (auto partition_info : partition_info_list) {
+                if (partition_info->get_location() == node_id) {
+                  LOG(INFO) << node_id << "'s partition is unbinding" << endl;
                   partition_info->unbind_all_blocks();
                 }
               }
@@ -303,29 +313,24 @@ void MasterNode::RemoveOneNode(unsigned int node_id, MasterNode* master_node){
 }
 void MasterNode::SyncNodeList(MasterNode* master_node)
 {
-//  try{
-      actor_system_config cfg;
-      actor_system system {cfg.load<io::middleman>()};
-      caf::scoped_actor self{system};
-      for (auto it = master_node->node_id_to_addr_.begin(); it != master_node->node_id_to_addr_.end(); ++it)
-      {
-        self->send(*master_node->node_id_to_actor_.at(it->first), SyncNodeInfo::value,*((BaseNode*)master_node));
-        LOG(INFO)<<" node info changed ,start sync to node: "<<it->first<<endl;
+      caf::scoped_actor self{system_};
+      for (auto it = master_node->node_id_to_addr_.begin();
+          it != master_node->node_id_to_addr_.end(); ++it) {
+        self->send(*master_node->node_id_to_actor_.at(it->first),
+                   SyncNodeInfo::value,
+                   *(dynamic_cast<BaseNode*>(master_node)));
+        LOG(INFO) << " node info changed ,start sync to node: "
+            << it->first << endl;
       }
-//  }catch(caf::network_error& e){
-//    LOG(INFO) <<"sync failure"<<endl;
-//  }
 }
 void MasterNode::FinishAllNode() {
-  actor_system_config cfg;
-  actor_system system {cfg.load<io::middleman>()};
-  caf::scoped_actor self{system};
+  caf::scoped_actor self{system_};
   for (auto it = node_id_to_actor_.begin(); it != node_id_to_actor_.end();
        ++it) {
     self->send(*it->second, ExitAtom::value);
   }
   caf::expected<caf::actor> master_actor_ =
-      system.middleman().remote_actor(get_node_ip(),get_node_port());
+      system_.middleman().remote_actor(get_node_ip(), get_node_port());
   self->send(*master_actor_, ExitAtom::value);
 }
 }  // namespace claims

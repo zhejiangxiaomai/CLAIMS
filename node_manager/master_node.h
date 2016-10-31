@@ -41,8 +41,7 @@
 #include "./base_node.h"
 #include "../common/error_define.h"
 #include "../common/ids.h"
-//using caf::behavior;
-//using caf::event_based_actor;
+
 using std::atomic_uint;
 using std::map;
 using std::pair;
@@ -66,6 +65,7 @@ class MasterNode : public BaseNode {
   MasterNode();
   MasterNode(string node_ip, uint16_t node_port);
 
+  actor_system system_;
  private:
   void CreateActor();
 

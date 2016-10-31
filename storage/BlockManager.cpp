@@ -19,7 +19,7 @@ using claims::common::rLoadFromHdfsOpenFailed;
 using claims::common::rLoadFromDiskOpenFailed;
 using claims::common::rUnbindPartitionFailed;
 using claims::common::HdfsConnector;
-
+using namespace claims;
 BlockManager* BlockManager::blockmanager_ = NULL;
 
 BlockManager* BlockManager::getInstance() {
@@ -65,6 +65,7 @@ void BlockManager::initialize() {
   //
 
   StorageBudgetMessage message(disk, memory, NodeID);
+
 
   Environment::getInstance()->getResourceManagerSlave()->ReportStorageBudget(
       message);
