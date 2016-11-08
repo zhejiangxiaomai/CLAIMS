@@ -87,10 +87,8 @@ caf::expected<caf::actor> &BaseNode::GetNodeActorFromId(const unsigned int id) {
   if (it != node_id_to_actor_.end()) {
     return it->second;
   } else {
-    caf::actor_system system{*dynamic_cast<actor_system_config *>
-        (Environment::getInstance()->get_caf_config())};
-    // need fix
-    auto null_actor = system.middleman().remote_actor("256.256.256.256", 10000);
+    auto null_actor = Environment::getInstance()->get_actor_system().middleman()
+        .remote_actor("256.256.256.256", 10000);
     LOG(WARNING) << "target actor is null actor"<< std::endl;
     return null_actor;
   }

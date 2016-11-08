@@ -17,8 +17,10 @@
 #include "../utility/lock.h"
 #include "../common/ids.h"
 #include "caf/all.hpp"
+//#include "../Environment.h"
+class CafConfig;
 using namespace caf;
-// using caf::actor;
+
 
 /*
  * maintain pair<id,port> information of exchange, and provide interface for
@@ -26,7 +28,7 @@ using namespace caf;
  */
 class ExchangeTracker {
  public:
-  ExchangeTracker();
+  explicit ExchangeTracker();
   virtual ~ExchangeTracker();
   bool RegisterExchange(ExchangeID exchange_id, std::string port);
   void LogoutExchange(const ExchangeID& exchange_id);
@@ -42,7 +44,6 @@ class ExchangeTracker {
  private:
   boost::unordered_map<ExchangeID, std::string> id_to_port;
   Lock lock_;
-  actor_system system_;
 };
 
 #endif /* EXCHANGETRACKER_H_ */

@@ -33,7 +33,6 @@ using claims::MasterNode;
 using claims::SegmentExecTracker;
 using claims::SlaveNode;
 using claims::StmtExecTracker;
-// using caf::actor_system_config;
 using namespace caf;
 class Catalog;
 class IteratorExecutorSlave;
@@ -41,8 +40,7 @@ class BlockManager;
 class ResourceManagerMaster;
 class InstanceResourceManager;
 class BlockManagerMaster;
-// class StorageBudgetMessage;
-// class BaseNode;
+
 class CafConfig : public actor_system_config {
  public:
   CafConfig();
@@ -72,7 +70,7 @@ class Environment {
 
   StmtExecTracker* get_stmt_exec_tracker() { return stmt_exec_tracker_; }
   SegmentExecTracker* get_segment_exec_tracker() { return seg_exec_tracker_; }
-  CafConfig* get_caf_config() { return caf_config_; }
+  actor_system& get_actor_system() { return actor_system_;}
 
  private:
   void AnnounceCafMessage();
@@ -115,7 +113,8 @@ class Environment {
 
   StmtExecTracker* stmt_exec_tracker_;
   SegmentExecTracker* seg_exec_tracker_;
-  CafConfig* caf_config_;
+  CafConfig caf_config_;
+  actor_system actor_system_;
   /**
    * TODO: the master and slave pair, such as ResouceManagerMaster and
    * ResourceManagerSlave, should have a

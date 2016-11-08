@@ -43,16 +43,15 @@ namespace claims {
 
 
 SegmentExecTracker::SegmentExecTracker():
-    system_(*dynamic_cast<actor_system_config *>
-(Environment::getInstance()->get_caf_config())),
     segment_exec_tracker_actor_(unsafe_actor_handle_init) {
   segment_exec_tracker_actor_ =
-      system_.spawn(SegmentExecTracker::ReportAllSegStatus, this);
+      Environment::getInstance()->get_actor_system()
+      .spawn(SegmentExecTracker::ReportAllSegStatus, this);
   LOG(INFO) << "SegmentExecTracker created" << std::endl;
 }
 
 SegmentExecTracker::~SegmentExecTracker() {
-  caf::scoped_actor self{system_};
+  caf::scoped_actor self{Environment::getInstance()->get_actor_system()};
   self->send(segment_exec_tracker_actor_, ExitAtom::value);
   LOG(INFO) << "SegmentExecTracker destoryed" << std::endl;
 }
@@ -108,15 +107,9 @@ behavior SegmentExecTracker::ReportAllSegStatus(
           LOG(INFO) << seg_exec_status.node_segment_id_.first << " , "
                     << seg_exec_status.node_segment_id_.second
                     << " before send: " << exec_status << " , " << exec_info;
-          // construct remote actor
-          NodeAddr addr =
-              Environment::getInstance()->get_slave_node()->GetNodeAddrFromId(
-                  seg_exec_status.coor_node_id_);
-          caf::actor_system system{*dynamic_cast<actor_system_config *>
-              (Environment::getInstance()->get_caf_config())};
-          expected<actor> coor_actor_ =
-              system.middleman().remote_actor(addr.first, addr.second);
-          self->request(*coor_actor_, std::chrono::seconds(kTimeout),
+
+            self->request(*(seg_exec_status.coor_actor_),
+                          std::chrono::seconds(kTimeout),
                   ReportSegESAtom::value, seg_exec_status.node_segment_id_,
                   exec_status, exec_info)
               .then(
@@ -168,6 +161,7 @@ behavior SegmentExecTracker::ReportAllSegStatus(
                                  << " ) when report status";
                     }
                   });
+//        }
           // guarantee it's the last action!!!
           --seg_exec_status.logic_time_;
         }

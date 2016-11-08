@@ -14,6 +14,7 @@
 #include "BlanceMatcher.h"
 #include "../common/ids.h"
 #include "../common/Message.h"
+#include "../Environment.h"
 using namespace caf;
 using namespace std;
 using namespace claims;
@@ -44,14 +45,12 @@ class BlockManagerMaster {
                           const StorageLevel &, const NodeID &) const;
   bool SendUnbindingMessage(const PartitionID &partition_id,
                             NodeID &target) const;
-  actor_system system_;
  private:
+//  BlockManagerMaster(CafConfig&& cfg);
   BlockManagerMaster();
-
  private:
   static BlockManagerMaster *master_;
   // 将blockMessage收到之后，首先看他是什么消息，然后传给BlockManagerMasterActor处理
-
   AllBlockInfo *abi_;
   BlanceMatcher *bm_;
 };

@@ -52,7 +52,6 @@ namespace claims {
 class MasterNode : public BaseNode {
  public:
   friend class MasterNodeActor;
-  //  class MasterNodeActor;
   static MasterNode* GetInstance();
   virtual ~MasterNode();
   void PrintNodeList();
@@ -65,7 +64,8 @@ class MasterNode : public BaseNode {
   MasterNode();
   MasterNode(string node_ip, uint16_t node_port);
 
-  actor_system system_;
+//  actor_system system_;
+  actor master_actor_;
  private:
   void CreateActor();
 

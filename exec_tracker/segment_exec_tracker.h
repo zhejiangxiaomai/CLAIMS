@@ -68,7 +68,6 @@ class SegmentExecTracker {
   // report all remote_segment_status located at slave node
   static behavior ReportAllSegStatus(
       caf::event_based_actor* self, SegmentExecTracker* seg_exec_tracker);
-  actor_system system_;
   actor segment_exec_tracker_actor_;
  private:
   boost::unordered_map<NodeSegmentID, SegmentExecStatus*>

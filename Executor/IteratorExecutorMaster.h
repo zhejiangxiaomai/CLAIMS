@@ -14,7 +14,7 @@
 #include "../physical_operator/physical_operator_base.h"
 #include "../common/Logging.h"
 #include "../utility/Timer.h"
-
+class CafConfig;
 using claims::physical_operator::PhysicalOperatorBase;
 class IteratorExecutorMaster {
  public:
@@ -31,7 +31,6 @@ class IteratorExecutorMaster {
 
  private:
   static IteratorExecutorMaster* _instance;
-  actor_system system_;
 };
 
 #endif /* ITERATOREXECUTORMASTER_H_ */

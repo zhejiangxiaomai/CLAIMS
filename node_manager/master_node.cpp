@@ -196,8 +196,7 @@ MasterNode* MasterNode::GetInstance() {
 }
 
 MasterNode::MasterNode() : node_id_gen_(0),
-    system_(*dynamic_cast<actor_system_config *>
-(Environment::getInstance()->get_caf_config())) {
+      master_actor_(unsafe_actor_handle_init) {
   instance_ = this;
   set_node_id(0);
   ReadMasterAddr();
@@ -207,26 +206,26 @@ MasterNode::MasterNode() : node_id_gen_(0),
 
 MasterNode::MasterNode(string node_ip, uint16_t node_port)
     : BaseNode(node_ip, node_port), node_id_gen_(0),
-      system_(*dynamic_cast<actor_system_config *>
-      (Environment::getInstance()->get_caf_config())) {
+      master_actor_(unsafe_actor_handle_init) {
   CreateActor();
 }
 
 MasterNode::~MasterNode() { instance_ = NULL; }
 void MasterNode::CreateActor() {
-  caf::expected<caf::actor> master_actor_ =
-        system_.spawn<MasterNodeActor>(this);
-//  LOG(INFO) << master_actor_.node().process_id() << "is master is process id";
-  auto expected = system_.middleman().publish(*master_actor_,
-                                             get_node_port(),
-                                             get_node_ip().c_str(), true);
+  master_actor_ =
+      Environment::getInstance()->get_actor_system()
+      .spawn<MasterNodeActor>(this);
+  auto expected = Environment::getInstance()->get_actor_system()
+      .middleman().publish(master_actor_,
+                           get_node_port(),
+                           get_node_ip().c_str(), true);
   if (!expected) {
     LOG(ERROR) << "connection error in publishing master actor port";
   } else {
     LOG(INFO) << "master ip port" << get_node_port()
         <<"  " <<get_node_ip() << " publish succeed!";
-    caf::scoped_actor self{system_};
-    self->send(*master_actor_, Updatelist::value);
+    caf::scoped_actor self{Environment::getInstance()->get_actor_system()};
+    self->send(master_actor_, Updatelist::value);
   }
 }
 void MasterNode::PrintNodeList() {
@@ -238,7 +237,7 @@ void MasterNode::PrintNodeList() {
 RetCode MasterNode::BroastNodeInfo(const unsigned int& node_id,
                                    const string& node_ip,
                                    const uint16_t& node_port) {
-  caf::scoped_actor self{system_};
+  caf::scoped_actor self{Environment::getInstance()->get_actor_system()};
   for (auto it = node_id_to_addr_.begin(); it != node_id_to_addr_.end(); ++it) {
     self->send(*node_id_to_actor_.at(it->first), BroadcastNodeAtom::value,
                node_id, node_ip, node_port);
@@ -258,19 +257,22 @@ uint32_t MasterNode::AddOneNode(string node_ip, uint16_t node_port) {
   node_id_to_addr_.insert(
       make_pair((unsigned int)node_id, make_pair(node_ip, node_port)));
   node_id_to_heartbeat_.insert(make_pair((unsigned int)node_id, 0));
-
-  caf::expected<caf::actor> actor = system_.middleman().
-      remote_actor(node_ip, node_port);
-  if (!actor) {
-    LOG(WARNING) << "cann't connect to node ( " << node_ip << " , " << node_port
-                 << " ) and create remote actor failed!!";
-    assert(false);
-  } else {
-    node_id_to_actor_.insert(make_pair((unsigned int)node_id, actor));
-    LOG(INFO) << "register one node( " << node_id << " < " << node_ip
+  {
+    caf::expected<caf::actor> actor =
+        Environment::getInstance()->get_actor_system().middleman().
+        remote_actor(node_ip, node_port);
+    if (!actor) {
+      LOG(WARNING) << "cann't connect to node ( " << node_ip
+          << " , " << node_port
+          << " ) and create remote actor failed!!";
+      assert(false);
+    } else {
+      node_id_to_actor_.insert(
+          make_pair((unsigned int)node_id, actor));
+      LOG(INFO) << "register one node( " << node_id << " < " << node_ip
               << " " << node_port << " > )" << std::endl;
+    }
   }
-  // BroastNodeInfo((unsigned int)node_id, node_ip, node_port);
   lock_.release();
   return node_id;
 }
@@ -311,9 +313,8 @@ void MasterNode::RemoveOneNode(unsigned int node_id, MasterNode* master_node) {
     }
   }
 }
-void MasterNode::SyncNodeList(MasterNode* master_node)
-{
-      caf::scoped_actor self{system_};
+void MasterNode::SyncNodeList(MasterNode* master_node) {
+      caf::scoped_actor self{Environment::getInstance()->get_actor_system()};
       for (auto it = master_node->node_id_to_addr_.begin();
           it != master_node->node_id_to_addr_.end(); ++it) {
         self->send(*master_node->node_id_to_actor_.at(it->first),
@@ -324,13 +325,11 @@ void MasterNode::SyncNodeList(MasterNode* master_node)
       }
 }
 void MasterNode::FinishAllNode() {
-  caf::scoped_actor self{system_};
+  caf::scoped_actor self{Environment::getInstance()->get_actor_system()};
   for (auto it = node_id_to_actor_.begin(); it != node_id_to_actor_.end();
        ++it) {
     self->send(*it->second, ExitAtom::value);
   }
-  caf::expected<caf::actor> master_actor_ =
-      system_.middleman().remote_actor(get_node_ip(), get_node_port());
-  self->send(*master_actor_, ExitAtom::value);
+  self->send(master_actor_, ExitAtom::value);
 }
 }  // namespace claims

@@ -50,7 +50,11 @@ SegmentExecStatus::SegmentExecStatus(const SegmentExecStatus& seg)
       ret_code_(seg.ret_code_),
       logic_time_(seg.logic_time_),
       stop_report_(std::move(&seg.stop_report_)),
-      ReportErrorTimes(std::move(&seg.ReportErrorTimes)) {
+      ReportErrorTimes(std::move(&seg.ReportErrorTimes)),
+      coor_actor_(actor(unsafe_actor_handle_init)) {
+    coor_actor_ = Environment::getInstance()->
+      get_slave_node()->GetNodeActorFromId(coor_node_id_);
+
 }
 SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id,
                                      unsigned int coor_node_id)
@@ -61,7 +65,10 @@ SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id,
       ret_code_(0),
       logic_time_(0),
       stop_report_(false),
-      ReportErrorTimes(0) {
+      ReportErrorTimes(0),
+      coor_actor_(actor(unsafe_actor_handle_init)) {
+  coor_actor_ = Environment::getInstance()->
+    get_slave_node()->GetNodeActorFromId(coor_node_id_);
 }
 SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id)
     : node_segment_id_(node_segment_id),
@@ -72,7 +79,11 @@ SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id)
       ReportErrorTimes(0),
       logic_time_(Environment::getInstance()
                       ->get_stmt_exec_tracker()
-                      ->get_logic_time()) {}
+                      ->get_logic_time()),
+      coor_actor_(actor(unsafe_actor_handle_init)) {
+//  coor_actor_ = Environment::getInstance()->
+//    get_slave_node()->GetNodeActorFromId(0);
+}
 SegmentExecStatus::~SegmentExecStatus() {
   //  ostringstream exec_info;
   //  exec_info << "query (" << node_segment_id_.first << " , "
@@ -117,12 +128,10 @@ bool SegmentExecStatus::UpdateStatus(ExecStatus exec_status, string exec_info,
     need_report = false;  // for debug
     if (need_report) {
       ++logic_time_;
-      actor_system_config cfg1;
-      actor_system system{cfg1.load<io::middleman>()};
-      scoped_actor self{system};
-      auto segment_exec_tracker_actor =
-          system.middleman().remote_actor("127.0.0.1", 20000);
-      self->send(*segment_exec_tracker_actor, ReportSAtom::value, *this);
+      scoped_actor self{Environment::getInstance()->get_actor_system()};
+      self->send(Environment::getInstance()->
+                 get_segment_exec_tracker()->
+                 segment_exec_tracker_actor_, ReportSAtom::value, *this);
     }
   } else {
     lock_.release();

@@ -398,6 +398,9 @@ void* ExchangeSenderPipeline::Sender(void* arg) {
         if (block_for_sending->GetRestSizeToHandle() > 0) {
           int recvbytes;
           recvbytes =
+
+
+
               send(Pthis->socket_fd_upper_list_[partition_id],
                    reinterpret_cast<char*>(block_for_sending->getBlock()) +
                        block_for_sending->GetCurSize(),

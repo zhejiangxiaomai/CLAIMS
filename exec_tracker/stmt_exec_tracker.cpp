@@ -39,23 +39,23 @@
 using std::make_pair;
 using std::string;
 using namespace caf;
-// using caf::actor_system;
+
 using claims::common::rCouldnotFindCancelQueryId;
 
 namespace claims {
 
 StmtExecTracker::StmtExecTracker() : query_id_gen_(0),
     logic_time_(0),
-    system_(*dynamic_cast<actor_system_config *>
-(Environment::getInstance()->get_caf_config())),
     stmt_exec_tracker_actor_(unsafe_actor_handle_init) {
+
   stmt_exec_tracker_actor_ =
-      system_.spawn(StmtExecTracker::CheckStmtExecStatus, this);
+      Environment::getInstance()->get_actor_system()
+      .spawn(StmtExecTracker::CheckStmtExecStatus, this);
   LOG(INFO) << "StmtExecTracker created" << std::endl;
 }
 
 StmtExecTracker::~StmtExecTracker() {
-  caf::scoped_actor self{system_};
+  caf::scoped_actor self{Environment::getInstance()->get_actor_system()};
   assert(query_id_to_stmtes_.size() == 0);
   self->send(stmt_exec_tracker_actor_, ExitAtom::value);
   LOG(INFO) << "StmtExecTracker destoryed" << std::endl;

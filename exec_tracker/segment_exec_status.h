@@ -82,11 +82,10 @@ class SegmentExecStatus {
   unsigned int coor_node_id_;
   u_int64_t logic_time_;
   RetCode ret_code_;
-
+  caf::expected<caf::actor> coor_actor_;
 // private:
   ExecStatus exec_status_;
   string exec_info_;
-
 };
 template <class Inspector>
 typename Inspector::result_type inspect(Inspector& f, SegmentExecStatus& x) {

@@ -49,8 +49,9 @@ class SlaveNode : public BaseNode {
   static SlaveNode* GetInstance();
   RetCode AddOneNode(const unsigned int& node_id, const string& node_ip,
                      const uint16_t& node_port);
-
-  actor_system system_;
+  caf::expected<caf::actor>& GetMasterActor() {return master_actor_;}
+  actor slave_actor_;
+  caf::expected<caf::actor> master_actor_;
  private:
   static SlaveNode* instance_;
   unsigned int heartbeat_count_;

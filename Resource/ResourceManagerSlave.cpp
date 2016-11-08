@@ -17,21 +17,20 @@ using caf::after;
 using claims::NodeAddr;
 using claims::OkAtom;
 using claims::StorageBudgetAtom;
-InstanceResourceManager::InstanceResourceManager()
-          :system_(*dynamic_cast<actor_system_config *>
-(Environment::getInstance()->get_caf_config())) {}
+InstanceResourceManager::InstanceResourceManager(){
+}
 
 InstanceResourceManager::~InstanceResourceManager() {}
 
 void InstanceResourceManager::ReportStorageBudget(
     StorageBudgetMessage& message) {
-  caf::scoped_actor self{system_};
-  caf::expected<caf::actor> master_actor = system_.middleman().
-        remote_actor(Environment::getInstance()->
-                     get_slave_node()->GetMasterAddr().first,
-                     Environment::getInstance()->
-                     get_slave_node()->GetMasterAddr().second);
-  self->request(*master_actor, std::chrono::seconds(30),
+  auto master_actor_ = Environment::getInstance()->
+                    get_slave_node()->GetMasterActor();
+  if (!master_actor_) {
+    LOG(WARNING) << "can't connect to master in ResourceManager" << endl;
+  } else {
+    caf::scoped_actor self{Environment::getInstance()->get_actor_system()};
+  self->request(*master_actor_, std::chrono::seconds(30),
                 StorageBudgetAtom::value, message)
       .receive(
       [=](OkAtom) {
@@ -42,8 +41,9 @@ void InstanceResourceManager::ReportStorageBudget(
           LOG(ERROR) << "reporting storage budget timeout!"<< endl;
         }
       LOG(ERROR) << "reporting storage budget error!"
-          << system_.render(err) << endl;
+          << Environment::getInstance()->get_actor_system().render(err) << endl;
       });
+  }
 }
 
 void InstanceResourceManager::setStorageBudget(unsigned long memory,

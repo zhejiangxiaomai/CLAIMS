@@ -73,7 +73,6 @@ const int kTimeout = 5;
 class MemoryInfo {};
 class DiskInfo {};
 typedef pair<string, uint16_t> NodeAddr;
-typedef std::unordered_map<int, pair<string, uint16_t>> id_map;
 
 
 class BaseNode {
@@ -90,8 +89,7 @@ class BaseNode {
   NodeAddr GetMasterAddr();
   void ReadMasterAddr();
   NodeAddr GetNodeAddrFromId(const unsigned int id);
-  expected<actor>& GetNodeActorFromId(const unsigned int id);
-  //  caf::expected<caf::actor>& GetMasterActor() { return master_actor_; }
+  expected<actor> &GetNodeActorFromId(const unsigned int id);
   vector<NodeID> GetAllNodeID();
 
   bool operator==(const BaseNode& r) const {
@@ -114,12 +112,9 @@ class BaseNode {
   NodeAddr node_addr_;
   NodeAddr master_addr_;
   Lock lock_;
-
  public:
-  //  actor_system system;
   std::unordered_map<int, pair<string, uint16_t>> node_id_to_addr_;
-  //  std::unordered_map<int, actor> node_id_to_actor_;
-  std::unordered_map<int, caf::expected<caf::actor>> node_id_to_actor_;
+  std::unordered_map<unsigned int, caf::expected<caf::actor>> node_id_to_actor_;
 };
 
 template <class Inspector>

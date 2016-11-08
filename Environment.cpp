@@ -47,7 +47,8 @@ using claims::StmtExecTracker;
 
 Environment* Environment::_instance = 0;
 
-Environment::Environment(bool ismaster) : ismaster_(ismaster) {
+Environment::Environment(bool ismaster) : ismaster_(ismaster),
+    actor_system_(caf_config_) {
   _instance = this;
   Config::getInstance();
   CodeGenerator::getInstance();
@@ -55,7 +56,6 @@ Environment::Environment(bool ismaster) : ismaster_(ismaster) {
   readConfigFile();
   initializeExpressionSystem();
   portManager = PortManager::getInstance();
-  caf_config_ = new CafConfig();
   if (ismaster) {
     catalog_ = claims::catalog::Catalog::getInstance();
     logging_->log("restore the catalog ...");
@@ -64,6 +64,7 @@ Environment::Environment(bool ismaster) : ismaster_(ismaster) {
       cerr << "ERROR: restore catalog failed" << endl;
     }
   }
+
   stmt_exec_tracker_ = new StmtExecTracker();
   seg_exec_tracker_ = new SegmentExecTracker();
 
@@ -85,8 +86,8 @@ Environment::Environment(bool ismaster) : ismaster_(ismaster) {
 
   /*Before initializing Resource Manager, the instance ip and port should be
    * decided.*/
-//  AnnounceCafMessage();
   initializeResourceManager();
+
   // should after above
   InitMembership();
 
@@ -146,20 +147,7 @@ void Environment::readConfigFile() {
   ip = (const char*)cfg.lookup("ip");
 }
 
-//void Environment::AnnounceCafMessage() {
-    //  announce<StorageBudgetMessage>(
-//      "StorageBudgetMessage", &StorageBudgetMessage::nodeid,
-//      &StorageBudgetMessage::memory_budget, &StorageBudgetMessage::disk_budget);
-//  announce<ProjectionID>("ProjectionID", &ProjectionID::table_id,
-//                         &ProjectionID::projection_off);
-//  announce<PartitionID>("PartitionID", &PartitionID::projection_id,
-//                        &PartitionID::partition_off);
-//  announce<ExchangeID>("ExchangeID", &ExchangeID::exchange_id,
-//                       &ExchangeID::partition_offset);
-//  announce<BaseNode>("BaseNode", &BaseNode::node_id_to_addr_);
-//  announce<NodeSegmentID>("NodeSegmentID", &NodeSegmentID::first,
-//                          &NodeSegmentID::second);
-//}
+
 void Environment::initializeStorage() {
   if (ismaster_) {
     blockManagerMaster_ = BlockManagerMaster::getInstance();

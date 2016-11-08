@@ -309,7 +309,7 @@ RetCode SelectExec::IsUpperExchangeRegistered(
   int times = 0;
   /// TODO(fzh)should release the strong synchronization
   for (int i = 0; i < upper_node_id_list.size(); ++i) {
-    auto target_actor =
+    auto& target_actor =
         Environment::getInstance()->get_slave_node()->GetNodeActorFromId(
             upper_node_id_list[i]);
     while (Environment::getInstance()

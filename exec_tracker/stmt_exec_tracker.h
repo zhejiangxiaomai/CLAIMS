@@ -65,7 +65,6 @@ class StmtExecTracker {
                            SegmentExecStatus::ExecStatus exec_status,
                            string exec_info);
   u_int64_t get_logic_time() { return logic_time_; }
-  actor_system system_;
 
  private:
   std::atomic_ullong logic_time_;
