@@ -23,7 +23,6 @@ class InstanceResourceManager {
 
  private:
   CPUResourceManager cpu_resource_;
-//  caf::expected<caf::actor> master_actor_;
 };
 
 #endif /* RESOURCEMANAGERSLAVE_H_ */

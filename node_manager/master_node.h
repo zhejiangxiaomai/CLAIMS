@@ -64,7 +64,6 @@ class MasterNode : public BaseNode {
   MasterNode();
   MasterNode(string node_ip, uint16_t node_port);
 
-//  actor_system system_;
   actor master_actor_;
  private:
   void CreateActor();

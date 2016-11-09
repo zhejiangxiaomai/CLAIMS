@@ -81,8 +81,6 @@ SegmentExecStatus::SegmentExecStatus(NodeSegmentID node_segment_id)
                       ->get_stmt_exec_tracker()
                       ->get_logic_time()),
       coor_actor_(actor(unsafe_actor_handle_init)) {
-//  coor_actor_ = Environment::getInstance()->
-//    get_slave_node()->GetNodeActorFromId(0);
 }
 SegmentExecStatus::~SegmentExecStatus() {
   //  ostringstream exec_info;
