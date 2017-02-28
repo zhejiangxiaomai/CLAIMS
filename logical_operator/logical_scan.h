@@ -31,6 +31,8 @@
 
 #include <iosfwd>
 #include <vector>
+#include <set>
+
 #include "../common/ids.h"
 #include "../catalog/attribute.h"
 #include "../catalog/table.h"
@@ -51,6 +53,8 @@ namespace logical_operator {
 class LogicalScan : public LogicalOperator {
  public:
   LogicalScan(std::vector<Attribute> attribute_list);
+  LogicalScan(set<string> columns, string table_name,
+              string table_alias, bool is_all);
   LogicalScan(const TableID&);
   LogicalScan(ProjectionDescriptor* projection, const float sample_rate_ = 1);
   LogicalScan(ProjectionDescriptor* const projection, string table_alias,
@@ -76,7 +80,10 @@ class LogicalScan : public LogicalOperator {
   ProjectionDescriptor* target_projection_;
   PlanContext* plan_context_;
   string table_alias_;
+  string table_name_;
   float sample_rate_;
+  set<string> columns_;
+  bool is_all_;
 };
 
 }  // namespace logical_operator
