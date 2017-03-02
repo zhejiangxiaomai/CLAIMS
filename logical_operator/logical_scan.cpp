@@ -216,17 +216,21 @@ PlanContext LogicalScan::GetPlanContext() {
   if (is_all_ || columns_.find("*") != columns_.end()) {
     plan_context_->attribute_list_ = table->getAttributes();
   } else {
-//      for (set<string>::const_iterator it = columns_.begin();
-//          it != columns_.end(); it++ ) {
-//        plan_context_->attribute_list_.push_back(table->getAttribute(*it));
-        plan_context_->attribute_list_ = target_projection_->getAttributeList();
-//      }
+    plan_context_->attribute_list_ = target_projection_->getAttributeList();
+  }
+
+  for (auto &it : plan_context_->attribute_list_) {
+    it.attrName = table_alias_ + it.attrName.substr(it.attrName.find('.'));
   }
   Partitioner* par = target_projection_->getPartitioner();
   plan_context_->plan_partitioner_ = PlanPartitioner(*par);
   plan_context_->plan_partitioner_.UpdateTableNameOfPartitionKey(table_alias_);
   plan_context_->commu_cost_ = 0;
   lock_->release();
+  for (auto it : plan_context_->attribute_list_) {
+    cout << it.getName() << endl;
+  }
+
   return *plan_context_;
 }
 ProjectionOffset get_Max_projection(TableDescriptor* table) {

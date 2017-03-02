@@ -69,7 +69,6 @@ class LogicalScan : public LogicalOperator {
                               PhysicalPlanDescriptor& physical_plan_descriptor,
                               const unsigned& kBlock_size = 4096 * 1024);
   void ChangeAliasAttr();
-
  private:
   /**check whether all the involved attributes are in the same projection.*/
   bool IsInASingleProjection() const;
