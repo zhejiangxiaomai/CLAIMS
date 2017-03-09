@@ -131,10 +131,10 @@ RetCode SelectExec::Execute(ExecutedResult* exec_result) {
 }
 
 RetCode SelectExec::Execute() {
-//#ifdef PRINTCONTEXT
-//  select_ast_->Print();
+#ifdef PRINTCONTEXT
+  select_ast_->Print();
   cout << "--------------begin semantic analysis---------------" << endl;
-//#endif
+#endif
   SemanticContext sem_cnxt;
   RetCode ret = rSuccess;
   ret = select_ast_->SemanticAnalisys(&sem_cnxt);
@@ -157,10 +157,10 @@ RetCode SelectExec::Execute() {
     }
   }
 
-//#ifdef PRINTCONTEXT
+#ifdef PRINTCONTEXT
   select_ast_->Print();
   cout << "--------------begin push down condition ------------" << endl;
-//#endif
+#endif
   PushDownConditionContext pdccnxt;
   ret = select_ast_->PushDownCondition(pdccnxt);
   if (rSuccess != ret) {
@@ -198,16 +198,16 @@ RetCode SelectExec::Execute() {
   logic_plan = new LogicalQueryPlanRoot(0, logic_plan, raw_sql_,
                                         LogicalQueryPlanRoot::kResultCollector);
   logic_plan->GetPlanContext();
-//#ifndef PRINTCONTEXT
+#ifndef PRINTCONTEXT
   logic_plan->Print();
   cout << "--------------begin physical plan -------------------" << endl;
-//#endif
+#endif
 
   PhysicalOperatorBase* physical_plan = logic_plan->GetPhysicalPlan(64 * 1024);
-//#ifndef PRINTCONTEXT
+#ifndef PRINTCONTEXT
   physical_plan->Print();
   cout << "--------------begin output result -------------------" << endl;
-//#endif
+#endif
   // collect all plan segments
   physical_plan->GetAllSegments(&all_segments_);
   // create thread to send all segments
