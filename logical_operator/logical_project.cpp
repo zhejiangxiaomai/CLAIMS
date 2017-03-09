@@ -74,10 +74,7 @@ LogicalProject::~LogicalProject() {
 // construct a PlanContext from child
 PlanContext LogicalProject::GetPlanContext() {
   lock_->acquire();
-  //  if (NULL != plan_context_) {
-  //    lock_->release();
-  //    return *plan_context_;
-  //  }
+
   PlanContext ret;
   // get the PlanContext of child
   const PlanContext child_plan_context = child_->GetPlanContext();
@@ -142,7 +139,8 @@ PlanContext LogicalProject::GetPlanContext() {
     mid_table_id = MIDINADE_TABLE_ID++;
   } else {
     mid_table_id =
-        plan_context_->plan_partitioner_.get_partition_key().table_id_;
+        plan_context_->attribute_list_[0].table_id_;
+    DELETE_PTR(plan_context_);
   }
   GetColumnToId(child_plan_context.attribute_list_, licnxt.column_id0_);
   for (int i = 0; i < expr_list_.size(); ++i) {
@@ -159,7 +157,6 @@ PlanContext LogicalProject::GetPlanContext() {
       }
     }
   }
-
 #endif
   // set the attribute list of the PlanContext to be returned
   ret.attribute_list_ = ret_attrs;
@@ -191,6 +188,7 @@ PhysicalOperatorBase* LogicalProject::GetPhysicalPlan(
 // construct a schema from attribute list of PlanContext
 Schema* LogicalProject::GetOutputSchema() {
   Schema* schema = GetSchema(plan_context_->attribute_list_);
+
   return schema;
 }
 
