@@ -184,10 +184,6 @@ PlanContext LogicalScan::GetPlanContext() {
       assert(false);
     }
     target_projection_ = table->getProjectoin(target_projection_off);
-    cout << table->getTableName() <<"in " << table->getNumberOfProjection()
-        << " projections, projection "
-         << target_projection_off << " has min cost:" << min_projection_cost
-         << std::endl;
     }
   } else {
     // if is all, select * from tableA, give largest projection;
@@ -227,10 +223,6 @@ PlanContext LogicalScan::GetPlanContext() {
   plan_context_->plan_partitioner_.UpdateTableNameOfPartitionKey(table_alias_);
   plan_context_->commu_cost_ = 0;
   lock_->release();
-  for (auto it : plan_context_->attribute_list_) {
-    cout << it.getName() << endl;
-  }
-
   return *plan_context_;
 }
 ProjectionOffset get_Max_projection(TableDescriptor* table) {

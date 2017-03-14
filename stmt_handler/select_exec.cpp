@@ -145,17 +145,6 @@ RetCode SelectExec::Execute() {
     LOG(ERROR) << "semantic analysis error result= : " << ret;
     return ret;
   }
-  cout << "--------------scan list---------------" << endl;
-  cout << "is all :"<< sem_cnxt.is_all <<endl;
-  for (auto map_it = sem_cnxt.table_to_column.begin();
-          map_it != sem_cnxt.table_to_column.end(); map_it++) {
-    cout << "table" << (*map_it).first <<":"<< endl;
-    set<string>::const_iterator cset_iter = (*map_it).second.begin();
-    while (cset_iter != (*map_it).second.end()) {
-      cout << (*cset_iter) << endl;
-      cset_iter++;
-    }
-  }
 
 #ifdef PRINTCONTEXT
   select_ast_->Print();
