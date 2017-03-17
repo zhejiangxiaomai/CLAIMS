@@ -161,7 +161,7 @@ RetCode SelectExec::Execute() {
     return ret;
   }
 //#ifndef PRINTCONTEXT
-  ret = select_ast_->SetScanAttrList(sem_cnxt);
+  ret = select_ast_->SetScanAttrList(&sem_cnxt);
   if (rSuccess != ret) {
      stmt_exec_status_->set_exec_info("semantic analysis error \n" +
                                       sem_cnxt.error_msg_);
@@ -169,7 +169,7 @@ RetCode SelectExec::Execute() {
      LOG(ERROR) << " Set Scan Attribute list error result= : " << ret;
      return ret;
   }
-  select_ast_->Print();
+//  select_ast_->Print();
   cout << "--------------begin logical plan -------------------" << endl;
 //#endif
 

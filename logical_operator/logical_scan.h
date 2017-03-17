@@ -53,12 +53,10 @@ namespace logical_operator {
 class LogicalScan : public LogicalOperator {
  public:
   LogicalScan(std::vector<Attribute> attribute_list);
-  LogicalScan(set<string> columns, string table_name,
-              string table_alias, bool is_all);
   LogicalScan(const TableID&);
   LogicalScan(ProjectionDescriptor* projection, const float sample_rate_ = 1);
-  LogicalScan(ProjectionDescriptor* const projection, string table_alias,
-              const float sample_rate_ = 1);
+  LogicalScan(string table_alias, set<string> columns, string table_name,
+              bool is_all, const float sample_rate_ = 1);
 
   LogicalScan(const TableID&,
               const std::vector<unsigned>& selected_attribute_index_list);

@@ -57,7 +57,7 @@ void AstNode::Print(int level) const {
        << "This is an AST_NODE!" << endl;
 }
 
-RetCode AstNode::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstNode::SetScanAttrList(SemanticContext* sem_cnxt) {
   return rSuccess;
 }
 RetCode AstNode::SemanticAnalisys(SemanticContext* sem_cnxt) {
@@ -193,7 +193,7 @@ void AstStmtList::Print(int level) const {
   }
 }
 
-RetCode AstStmtList::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstStmtList::SetScanAttrList(SemanticContext *sem_cnxt) {
   if (stmt_ != NULL) {
     stmt_->SetScanAttrList(sem_cnxt);
   }

@@ -294,7 +294,7 @@ class AstNode {
     return rSuccess;
   }
   AstNode* GetAndExpr(const set<AstNode*>& expression);
-  virtual RetCode SetScanAttrList(const SemanticContext &sem_cnxt);
+  virtual RetCode SetScanAttrList(SemanticContext *sem_cnxt);
   AstNodeType ast_node_type_;
   string expr_str_;
 };
@@ -316,7 +316,7 @@ class AstStmtList : public AstNode {
   AstStmtList(AstNodeType ast_node_type, AstNode* stmt, AstNode* next);
   ~AstStmtList();
   void Print(int level = 0) const;
-  RetCode SetScanAttrList(const SemanticContext &sem_cnxt);
+  RetCode SetScanAttrList(SemanticContext *sem_cnxt);
   RetCode SemanticAnalisys(SemanticContext* sem_cnxt);
   RetCode PushDownCondition(PushDownConditionContext& pdccnxt);
   RetCode GetLogicalPlan(LogicalOperator*& logic_plan);

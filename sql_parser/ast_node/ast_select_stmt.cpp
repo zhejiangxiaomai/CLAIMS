@@ -112,7 +112,7 @@ void AstSelectList::Print(int level) const {
   }
 }
 
-RetCode AstSelectList::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstSelectList::SetScanAttrList(SemanticContext* sem_cnxt) {
   if (args_ != NULL) {
     args_->SetScanAttrList(sem_cnxt);
   }
@@ -190,7 +190,7 @@ void AstSelectExpr::Print(int level) const {
        << "expr alias: " << expr_alias_ << endl;
 }
 
-RetCode AstSelectExpr::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstSelectExpr::SetScanAttrList(SemanticContext* sem_cnxt) {
   if (expr_ != NULL) {
      expr_->SetScanAttrList(sem_cnxt);
   }
@@ -284,7 +284,7 @@ void AstFromList::Print(int level) const {
   }
 }
 
-RetCode AstFromList::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstFromList::SetScanAttrList(SemanticContext* sem_cnxt) {
   for (auto it = equal_join_condition_.begin();
        it != equal_join_condition_.end(); ++it) {
     (*it)->SetScanAttrList(sem_cnxt);
@@ -443,7 +443,7 @@ void AstTable::Print(int level) const {
        << "table_alias: " << table_alias_ << endl;
 }
 
-RetCode AstTable::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstTable::SetScanAttrList(SemanticContext* sem_cnxt) {
   for (auto it = equal_join_condition_.begin();
        it != equal_join_condition_.end(); ++it) {
     (*it)->SetScanAttrList(sem_cnxt);
@@ -453,11 +453,11 @@ RetCode AstTable::SetScanAttrList(const SemanticContext &sem_cnxt) {
     (*it)->SetScanAttrList(sem_cnxt);
   }
   // if sql is not  select *
-  if (sem_cnxt.is_all != true) {
+  if (sem_cnxt->is_all != true) {
     is_all_ = false;
-    if (sem_cnxt.table_to_column.find(table_name_) !=
-        sem_cnxt.table_to_column.end()) {
-        columns_ = sem_cnxt.table_to_column[table_name_];
+    if (sem_cnxt->table_to_column.find(table_name_) !=
+        sem_cnxt->table_to_column.end()) {
+        columns_ = sem_cnxt->table_to_column[table_name_];
         return rSuccess;
     } else {
       return rTableNotExisted;
@@ -506,25 +506,12 @@ RetCode AstTable::GetLogicalPlan(LogicalOperator*& logic_plan) {
           ->getCatalog()
           ->getTable(table_name_)
           ->HasDeletedTuples()) {
-//    LogicalOperator* base_table = new LogicalScan(Environment::getInstance()
-//                                                      ->getCatalog()
-//                                                      ->getTable(table_name_)
-//                                                      ->getProjection(0),
-//                                                  table_alias_);
-    LogicalOperator* base_table = new LogicalScan(columns_,
-                                      table_name_, table_alias_, is_all_);
+    LogicalOperator* base_table = new LogicalScan(table_alias_, columns_, table_name_, is_all_);
 
     Attribute filter_base =
         base_table->GetPlanContext().plan_partitioner_.get_partition_key();
-//    LogicalOperator* del_table =
-//        new LogicalScan(Environment::getInstance()
-//                            ->getCatalog()
-//                            ->getTable(table_name_ + "_DEL")
-//                            ->getProjection(0),
-//                        table_alias_ + "_DEL");
     LogicalOperator* del_table =
-            new LogicalScan(columns_, table_name_+"_DEL",
-                            table_alias_ + "_DEL", is_all_);
+        new LogicalScan(table_alias_ + "_DEL", columns_, table_name_ , is_all_);
     Attribute filter_del =
         del_table->GetPlanContext().plan_partitioner_.get_partition_key();
 
@@ -536,12 +523,7 @@ RetCode AstTable::GetLogicalPlan(LogicalOperator*& logic_plan) {
     logic_plan = new LogicalDeleteFilter(filter_pair, del_table, base_table);
 
   } else {
-//    logic_plan = new LogicalScan(Environment::getInstance()
-//                                     ->getCatalog()
-//                                     ->getTable(table_name_)
-//                                     ->getProjection(0),
-//                                 table_alias_);
-    logic_plan = new LogicalScan(columns_, table_name_, table_alias_, is_all_);
+    logic_plan = new LogicalScan(table_alias_, columns_, table_name_, is_all_);
   }
   if (equal_join_condition_.size() > 0) {
     LOG(ERROR) << "equal join condition shouldn't occur in a single table!"
@@ -600,7 +582,7 @@ void AstSubquery::Print(int level) const {
   }
 }
 
-RetCode AstSubquery::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstSubquery::SetScanAttrList(SemanticContext* sem_cnxt) {
   for (auto it = equal_join_condition_.begin();
        it != equal_join_condition_.end(); ++it) {
     (*it)->SetScanAttrList(sem_cnxt);
@@ -698,7 +680,7 @@ AstJoinCondition::AstJoinCondition(AstNodeType ast_node_type,
 
 AstJoinCondition::~AstJoinCondition() { delete condition_; }
 
-RetCode AstJoinCondition::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstJoinCondition::SetScanAttrList(SemanticContext* sem_cnxt) {
   if (condition_ != NULL) {
      condition_->SetScanAttrList(sem_cnxt);
   }
@@ -767,7 +749,7 @@ AstJoin::~AstJoin() {
   delete right_table_;
   delete join_condition_;
 }
-RetCode AstJoin::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstJoin::SetScanAttrList(SemanticContext* sem_cnxt) {
   for (auto it = equal_join_condition_.begin();
        it != equal_join_condition_.end(); ++it) {
     (*it)->SetScanAttrList(sem_cnxt);
@@ -991,7 +973,7 @@ AstWhereClause::AstWhereClause(AstNodeType ast_node_type, AstNode* expr)
 AstWhereClause::~AstWhereClause() { delete expr_; }
 
 
-RetCode AstWhereClause::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstWhereClause::SetScanAttrList(SemanticContext* sem_cnxt) {
   if (expr_ != NULL) expr_->SetScanAttrList(sem_cnxt);
   return rSuccess;
 }
@@ -1026,7 +1008,7 @@ AstGroupByList::~AstGroupByList() {
   delete next_;
 }
 
-RetCode AstGroupByList::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstGroupByList::SetScanAttrList(SemanticContext* sem_cnxt) {
   if (expr_ != NULL) {
     expr_->SetScanAttrList(sem_cnxt);
   }
@@ -1115,7 +1097,7 @@ AstGroupByClause::AstGroupByClause(AstNodeType ast_node_type,
 
 AstGroupByClause::~AstGroupByClause() { delete groupby_list_; }
 
-RetCode AstGroupByClause::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstGroupByClause::SetScanAttrList(SemanticContext* sem_cnxt) {
   groupby_list_->SetScanAttrList(sem_cnxt);
   return rSuccess;
 }
@@ -1167,7 +1149,7 @@ AstOrderByList::~AstOrderByList() {
   delete next_;
 }
 
-RetCode AstOrderByList::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstOrderByList::SetScanAttrList(SemanticContext* sem_cnxt) {
   if (expr_ != NULL) expr_->SetScanAttrList(sem_cnxt);
   if (next_ != NULL) next_->SetScanAttrList(sem_cnxt);
   return rSuccess;
@@ -1243,7 +1225,7 @@ AstOrderByClause::AstOrderByClause(AstNodeType ast_node_type,
 
 AstOrderByClause::~AstOrderByClause() { delete orderby_list_; }
 
-RetCode AstOrderByClause::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstOrderByClause::SetScanAttrList(SemanticContext *sem_cnxt) {
   if (orderby_list_ != NULL) orderby_list_->SetScanAttrList(sem_cnxt);
   return rSuccess;
 }
@@ -1306,7 +1288,7 @@ AstHavingClause::AstHavingClause(AstNodeType ast_node_type, AstNode* expr)
 
 AstHavingClause::~AstHavingClause() { delete expr_; }
 
-RetCode AstHavingClause::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstHavingClause::SetScanAttrList(SemanticContext* sem_cnxt) {
   if (expr_ != NULL) expr_->SetScanAttrList(sem_cnxt);
   return rSuccess;
 }
@@ -1367,7 +1349,7 @@ AstLimitClause::~AstLimitClause() {
   delete row_count_;
 }
 
-RetCode AstLimitClause::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstLimitClause::SetScanAttrList(SemanticContext* sem_cnxt) {
   if (offset_ != NULL) offset_->SetScanAttrList(sem_cnxt);
   if (row_count_ != NULL) row_count_->SetScanAttrList(sem_cnxt);
   return rSuccess;
@@ -1460,7 +1442,7 @@ AstColumn::AstColumn(AstColumn* node)
 }
 AstColumn::~AstColumn() { delete next_; }
 
-RetCode AstColumn::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstColumn::SetScanAttrList(SemanticContext* sem_cnxt) {
 //  next_->SetScanAttrList(sem_cnxt);
   return rSuccess;
 }
@@ -1637,7 +1619,7 @@ AstSelectStmt::~AstSelectStmt() {
   delete select_into_clause_;
 }
 
-RetCode AstSelectStmt::SetScanAttrList(const SemanticContext &sem_cnxt) {
+RetCode AstSelectStmt::SetScanAttrList(SemanticContext* sem_cnxt) {
   select_list_->SetScanAttrList(sem_cnxt);
   if (from_list_ != NULL) from_list_->SetScanAttrList(sem_cnxt);
   if (where_clause_ != NULL) where_clause_->SetScanAttrList(sem_cnxt);
