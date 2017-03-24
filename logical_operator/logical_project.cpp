@@ -70,6 +70,9 @@ LogicalProject::~LogicalProject() {
     delete child_;
     child_ = NULL;
   }
+  for (auto it = expr_list_.begin(); it != expr_list_.end() ; it++) {
+    delete *it;
+  }
 }
 // construct a PlanContext from child
 PlanContext LogicalProject::GetPlanContext() {
@@ -141,6 +144,7 @@ PlanContext LogicalProject::GetPlanContext() {
     mid_table_id =
         plan_context_->attribute_list_[0].table_id_;
     DELETE_PTR(plan_context_);
+    plan_context_ == NULL;
   }
   GetColumnToId(child_plan_context.attribute_list_, licnxt.column_id0_);
   for (int i = 0; i < expr_list_.size(); ++i) {

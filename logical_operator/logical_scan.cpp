@@ -82,9 +82,6 @@ LogicalScan::LogicalScan(string table_alias, set<string> columns,
       is_all_(is_all),
       sample_rate_(sample_rate),
       plan_context_(NULL) {
-//  scan_attribute_list_ = projection->getAttributeList();
-//  ChangeAliasAttr();
-//  target_projection_ = projection;
 }
 LogicalScan::LogicalScan(
     const TableID& table_id,
